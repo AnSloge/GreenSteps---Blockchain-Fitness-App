@@ -1,74 +1,50 @@
 import { useState } from 'react'
-import { Container, Typography, Box, CssBaseline, Divider } from '@mui/material'
-import { createTheme, ThemeProvider } from '@mui/material/styles'
+import { Container, CssBaseline, ThemeProvider, createTheme } from '@mui/material'
 import HealthDataUpload from './components/HealthDataUpload'
-import Web3Connection from './components/Web3Connection'
+import HealthDashboard from './components/HealthDashboard'
 import AndroidHealthConnect from './components/AndroidHealthConnect'
+import Web3Connection from './components/Web3Connection'
+import './App.css'
 
-// Your deployed contract address
-const CONTRACT_ADDRESS = "YOUR_CONTRACT_ADDRESS"; // Replace with actual address after deployment
-
+// Create a theme instance
 const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#2e7d32', // Green color for environmental theme
+      main: '#2ecc71',
+    },
+    secondary: {
+      main: '#3498db',
+    },
+    error: {
+      main: '#e74c3c',
     },
   },
 });
 
 function App() {
-  const [web3Data, setWeb3Data] = useState(null);
   const [healthData, setHealthData] = useState(null);
+  const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
 
-  const handleWeb3Connect = (data) => {
-    setWeb3Data(data);
+  const handleDataUpload = (data) => {
+    setHealthData(data);
   };
 
-  const handleHealthData = (data) => {
+  const handleHealthConnectData = (data) => {
     setHealthData(data);
-    if (web3Data?.contract) {
-      web3Data.contract.submitStepsToContract(data);
-    }
   };
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container maxWidth="md">
-        <Box sx={{ my: 4 }}>
-          <Typography variant="h3" component="h1" gutterBottom align="center">
-            GreenSteps
-          </Typography>
-          <Typography variant="h6" component="h2" gutterBottom align="center" color="text.secondary">
-            Convert Your Steps into Carbon Credits
-          </Typography>
-
-          <Box sx={{ mt: 4 }}>
-            <Web3Connection 
-              onConnect={handleWeb3Connect}
-              contractAddress={CONTRACT_ADDRESS}
-            />
-          </Box>
-
-          <Box sx={{ mt: 3 }}>
-            <AndroidHealthConnect 
-              onDataReceived={handleHealthData}
-            />
-          </Box>
-
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              OR
-            </Typography>
-          </Divider>
-
-          <Box sx={{ mt: 3 }}>
-            <HealthDataUpload 
-              onDataUpload={handleHealthData}
-            />
-          </Box>
-        </Box>
+      <Container maxWidth="lg">
+        <h1>Health Data Dashboard</h1>
+        
+        <AndroidHealthConnect onDataReceived={handleHealthConnectData} />
+        <HealthDataUpload onDataUpload={handleDataUpload} />
+        <Web3Connection contractAddress={contractAddress} />
+        
+        {healthData && <HealthDashboard healthData={healthData} />}
       </Container>
     </ThemeProvider>
   )
