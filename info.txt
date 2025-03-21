@@ -9,10 +9,11 @@ Project description
 Development steps
 1.	Mobile Fitness Data
 •	Use Health Connect Api to export step count, distance, or calories.
-o	Upload CSV/JSON file8 exported from phone
+o	Upload CSV/JSON file8s) exported from phone
 o	Implement simple Android app that pushes the data to web frontend?
 
 2.	Smart Contracts
+Alltid bruk PNPM!
 •	Solidity smart contract that:
 o	Accepts a user’s wallet address and activity data (e.g., distance walked)
 o	Mints carbon credit tokens based on that data.
