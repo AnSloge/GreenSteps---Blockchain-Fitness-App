@@ -27,5 +27,10 @@
     "hardhat-gas-reporter": "^1.0.10",
     "solidity-coverage": "^0.8.14",
     "typechain": "^8.3.0"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.4.8"
   }
 }
