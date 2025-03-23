@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract GreenStepsToken is ERC20, Ownable {
     // Conversion rate: steps to tokens (can be adjusted)
@@ -25,7 +26,8 @@ contract GreenStepsToken is ERC20, Ownable {
         );
         require(steps > 0, "Steps must be greater than 0");
 
-        uint256 tokensToMint = (steps / stepsPerToken) * 1e18; // Convert to 18 decimals
+        // Calculate tokens with precision
+        uint256 tokensToMint = (steps * (10 ** decimals())) / stepsPerToken;
         _mint(user, tokensToMint);
 
         dailySubmissions[user][date] = true;

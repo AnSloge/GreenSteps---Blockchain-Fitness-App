@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, Typography, Paper } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, IconButton, Tooltip, Menu, MenuItem, Typography } from '@mui/material';
+import { AccountBalanceWallet, AccountBalanceWalletOutlined } from '@mui/icons-material';
 import { ethers } from 'ethers';
 
 // Import your contract ABI
@@ -13,155 +14,159 @@ const contractABI = [
 const Web3Connection = ({ onConnect, contractAddress }) => {
   const [account, setAccount] = useState(null);
   const [provider, setProvider] = useState(null);
-  const [contract, setContract] = useState(null);
-  const [balance, setBalance] = useState(0);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const initializeConnection = useCallback(async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      setProvider(provider);
+
+      try {
+        const accounts = await window.ethereum.request({
+          method: 'eth_accounts'
+        });
+
+        if (accounts.length > 0) {
+          const account = accounts[0];
+          setAccount(account);
+
+          const signer = await provider.getSigner();
+          const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+          if (onConnect) {
+            onConnect({ account, contract });
+          }
+        }
+      } catch (error) {
+        console.error('Error checking initial connection:', error);
+      }
+
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      return () => {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      };
+    }
+  }, [contractAddress, onConnect]);
 
   useEffect(() => {
-    const initializeConnection = async () => {
-      if (window.ethereum) {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        setProvider(provider);
-
-        try {
-          // Check if already connected
-          const accounts = await window.ethereum.request({
-            method: 'eth_accounts'  // This gets currently connected accounts without prompting
-          });
-
-          if (accounts.length > 0) {
-            const account = accounts[0];
-            setAccount(account);
-
-            const signer = await provider.getSigner();
-            const contract = new ethers.Contract(contractAddress, contractABI, signer);
-            setContract(contract);
-
-            // Get token balance
-            const balance = await contract.balanceOf(account);
-            setBalance(ethers.formatEther(balance));
-
-            if (onConnect) {
-              onConnect({ account, contract });
-            }
-          }
-        } catch (error) {
-          console.error('Error checking initial connection:', error);
-        }
-
-        // Listen for account changes
-        window.ethereum.on('accountsChanged', handleAccountsChanged);
-        
-        return () => {
-          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        };
-      }
-    };
-
     initializeConnection();
-  }, [contractAddress, onConnect]);
+  }, [initializeConnection]);
 
   const handleAccountsChanged = (accounts) => {
     if (accounts.length === 0) {
-      // User disconnected their wallet
       disconnectWallet();
     } else {
-      // User switched accounts
       setAccount(accounts[0]);
     }
   };
 
   const connectWallet = async () => {
-    if (provider) {
-      try {
-        const accounts = await window.ethereum.request({
-          method: 'eth_requestAccounts'
-        });
-        const account = accounts[0];
-        setAccount(account);
+    if (!window.ethereum) {
+      window.open('https://metamask.io/download/', '_blank');
+      return;
+    }
 
-        const signer = await provider.getSigner();
-        const contract = new ethers.Contract(contractAddress, contractABI, signer);
-        setContract(contract);
+    setIsLoading(true);
+    try {
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
+      });
+      const account = accounts[0];
+      setAccount(account);
 
-        // Get token balance
-        const balance = await contract.balanceOf(account);
-        setBalance(ethers.formatEther(balance));
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-        if (onConnect) {
-          onConnect({ account, contract });
-        }
-      } catch (error) {
-        console.error('Error connecting wallet:', error);
-        alert('Error connecting wallet. Please make sure MetaMask is installed and unlocked.');
+      if (onConnect) {
+        onConnect({ account, contract });
       }
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const disconnectWallet = () => {
     setAccount(null);
-    setContract(null);
-    setBalance(0);
+    handleMenuClose();
     if (onConnect) {
       onConnect(null);
     }
   };
 
-  const submitStepsToContract = async (stepsData) => {
-    if (!contract || !account) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    try {
-      for (const data of stepsData) {
-        const date = Math.floor(new Date(data.date).getTime() / 86400000); // Convert to days since epoch
-        const tx = await contract.mintFromSteps(account, data.steps, date);
-        await tx.wait();
-      }
-      alert('Steps submitted successfully!');
-      
-      // Update balance
-      const newBalance = await contract.balanceOf(account);
-      setBalance(ethers.formatEther(newBalance));
-    } catch (error) {
-      console.error('Error submitting steps:', error);
-      alert('Error submitting steps. Please try again.');
-    }
-  };
-
   return (
-    <Paper elevation={3} sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>
-        Wallet Connection
-      </Typography>
-      
+    <Box>
       {!account ? (
-        <Button
-          variant="contained"
-          onClick={connectWallet}
-          sx={{ mb: 2 }}
-        >
-          Connect MetaMask
-        </Button>
-      ) : (
-        <Box>
-          <Typography variant="body1" gutterBottom>
-            Connected Account: {account.slice(0, 6)}...{account.slice(-4)}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            Token Balance: {balance} GRST
-          </Typography>
-          <Button
-            variant="outlined"
-            color="error"
-            onClick={disconnectWallet}
-            sx={{ mt: 1 }}
+        <Tooltip title="Connect Wallet">
+          <IconButton
+            onClick={connectWallet}
+            disabled={isLoading}
+            sx={{
+              background: 'linear-gradient(135deg, #34C759 0%, #007AFF 100%)',
+              color: 'white',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #2fb350 0%, #0056b3 100%)',
+              },
+              width: 40,
+              height: 40,
+            }}
           >
-            Disconnect Wallet
-          </Button>
-        </Box>
+            <AccountBalanceWalletOutlined />
+          </IconButton>
+        </Tooltip>
+      ) : (
+        <>
+          <Tooltip title={`${account.slice(0, 6)}...${account.slice(-4)}`}>
+            <IconButton
+              onClick={handleMenuClick}
+              sx={{
+                background: 'linear-gradient(135deg, #34C759 0%, #007AFF 100%)',
+                color: 'white',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #2fb350 0%, #0056b3 100%)',
+                },
+                width: 40,
+                height: 40,
+              }}
+            >
+              <AccountBalanceWallet />
+            </IconButton>
+          </Tooltip>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem onClick={handleMenuClose}>
+              <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                {account.slice(0, 6)}...{account.slice(-4)}
+              </Typography>
+            </MenuItem>
+            <MenuItem onClick={disconnectWallet} sx={{ color: 'error.main' }}>
+              Disconnect
+            </MenuItem>
+          </Menu>
+        </>
       )}
-    </Paper>
+    </Box>
   );
 };
 
