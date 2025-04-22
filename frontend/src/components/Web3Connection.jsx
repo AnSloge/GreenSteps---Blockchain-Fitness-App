@@ -16,6 +16,7 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
   const [provider, setProvider] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -39,15 +40,18 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
           const account = accounts[0];
           setAccount(account);
 
-          const signer = await provider.getSigner();
-          const contract = new ethers.Contract(contractAddress, contractABI, signer);
+          if (contractAddress) {
+            const signer = await provider.getSigner();
+            const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-          if (onConnect) {
-            onConnect({ account, contract });
+            if (onConnect) {
+              onConnect({ account, contract });
+            }
           }
         }
       } catch (error) {
         console.error('Error checking initial connection:', error);
+        setError('Failed to initialize connection');
       }
 
       window.ethereum.on('accountsChanged', handleAccountsChanged);
@@ -76,6 +80,7 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
     }
 
     setIsLoading(true);
+    setError(null);
     try {
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts'
@@ -83,14 +88,19 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
       const account = accounts[0];
       setAccount(account);
 
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+      if (contractAddress) {
+        const signer = await provider.getSigner();
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-      if (onConnect) {
-        onConnect({ account, contract });
+        if (onConnect) {
+          onConnect({ account, contract });
+        }
+      } else {
+        setError('Contract address is not set');
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
+      setError('Failed to connect wallet');
     } finally {
       setIsLoading(false);
     }
@@ -98,73 +108,51 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
 
   const disconnectWallet = () => {
     setAccount(null);
-    handleMenuClose();
+    setError(null);
     if (onConnect) {
-      onConnect(null);
+      onConnect({ account: null, contract: null });
     }
   };
 
   return (
     <Box>
-      {!account ? (
-        <Tooltip title="Connect Wallet">
-          <IconButton
-            onClick={connectWallet}
-            disabled={isLoading}
-            sx={{
-              background: 'linear-gradient(135deg, #34C759 0%, #007AFF 100%)',
-              color: 'white',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #2fb350 0%, #0056b3 100%)',
-              },
-              width: 40,
-              height: 40,
-            }}
-          >
-            <AccountBalanceWalletOutlined />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <>
-          <Tooltip title={`${account.slice(0, 6)}...${account.slice(-4)}`}>
-            <IconButton
-              onClick={handleMenuClick}
-              sx={{
-                background: 'linear-gradient(135deg, #34C759 0%, #007AFF 100%)',
-                color: 'white',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #2fb350 0%, #0056b3 100%)',
-                },
-                width: 40,
-                height: 40,
-              }}
-            >
-              <AccountBalanceWallet />
-            </IconButton>
-          </Tooltip>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-          >
-            <MenuItem onClick={handleMenuClose}>
-              <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-                {account.slice(0, 6)}...{account.slice(-4)}
-              </Typography>
-            </MenuItem>
-            <MenuItem onClick={disconnectWallet} sx={{ color: 'error.main' }}>
-              Disconnect
-            </MenuItem>
-          </Menu>
-        </>
+      <Tooltip title={account ? "Connected Wallet" : "Connect Wallet"}>
+        <IconButton
+          onClick={account ? handleMenuClick : connectWallet}
+          disabled={isLoading}
+          sx={{
+            color: account ? 'primary.main' : 'text.secondary',
+            '&:hover': {
+              color: account ? 'primary.dark' : 'text.primary',
+            },
+          }}
+        >
+          {account ? <AccountBalanceWallet /> : <AccountBalanceWalletOutlined />}
+        </IconButton>
+      </Tooltip>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={disconnectWallet}>
+          <Typography>Disconnect</Typography>
+        </MenuItem>
+      </Menu>
+
+      {error && (
+        <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block' }}>
+          {error}
+        </Typography>
       )}
     </Box>
   );
