@@ -28,7 +28,7 @@ describe("GreenStepsToken", function () {
 
     it("Should have correct initial conversion rates", async function () {
       expect(await token.stepsPerToken()).to.equal(1000);
-      expect(await token.stepsPerCarbonCredit()).to.equal(5000);
+      expect(await token.stepsPerCarbonCredit()).to.equal(10000);
       expect(await token.carbonCreditValue()).to.equal(100);
     });
   });
@@ -42,15 +42,15 @@ describe("GreenStepsToken", function () {
       const stats = await token.getWeeklyStats(user1.address, weekNumber);
       
       expect(stats.steps).to.equal(steps);
-      expect(stats.carbonCredits).to.equal(Math.floor(steps / 5000));
+      expect(stats.carbonCredits).to.equal(Math.floor(steps / 10000));
       expect(stats.tokensEarned).to.equal(
-        Math.floor(steps / 1000) + (Math.floor(steps / 5000) * 100)
+        Math.floor(steps / 1000) + (Math.floor(steps / 10000) * 100)
       );
       expect(stats.claimed).to.equal(false);
     });
 
     it("Should emit StepsSubmitted event", async function () {
-      const expectedCarbonCredits = Math.floor(steps / 5000);
+      const expectedCarbonCredits = Math.floor(steps / 10000);
       const expectedTokens = Math.floor(steps / 1000) + (expectedCarbonCredits * 100);
       
       await expect(token.submitSteps(user1.address, steps, weekNumber))
@@ -91,13 +91,13 @@ describe("GreenStepsToken", function () {
       const stats = await token.getWeeklyStats(user1.address, weekNumber);
       expect(stats.claimed).to.equal(true);
       
-      const expectedCarbonCredits = Math.floor(steps / 5000);
+      const expectedCarbonCredits = Math.floor(steps / 10000);
       const expectedTokens = Math.floor(steps / 1000) + (expectedCarbonCredits * 100);
       expect(await token.balanceOf(user1.address)).to.equal(expectedTokens);
     });
 
     it("Should emit WeeklyRewardsClaimed event", async function () {
-      const expectedCarbonCredits = Math.floor(steps / 5000);
+      const expectedCarbonCredits = Math.floor(steps / 10000);
       const expectedTokens = Math.floor(steps / 1000) + (expectedCarbonCredits * 100);
       
       await expect(token.connect(user1).claimWeeklyRewards(weekNumber))
@@ -135,11 +135,11 @@ describe("GreenStepsToken", function () {
       const stats = await token.getUserStats(user1.address);
       expect(stats.totalSteps).to.equal(steps1 + steps2);
       expect(stats.totalCarbonCredits).to.equal(
-        Math.floor(steps1 / 5000) + Math.floor(steps2 / 5000)
+        Math.floor(steps1 / 10000) + Math.floor(steps2 / 10000)
       );
       expect(stats.totalTokensEarned).to.equal(
         Math.floor(steps1 / 1000) + Math.floor(steps2 / 1000) +
-        (Math.floor(steps1 / 5000) * 100) + (Math.floor(steps2 / 5000) * 100)
+        (Math.floor(steps1 / 10000) * 100) + (Math.floor(steps2 / 10000) * 100)
       );
     });
 

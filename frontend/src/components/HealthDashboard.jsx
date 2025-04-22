@@ -56,8 +56,8 @@ const HealthDashboard = ({ healthData, contract }) => {
               id: dayDate.toISOString(),
               date: dayDate,
               steps: dailySteps,
-              carbonCredits: Math.floor(dailySteps / 5000),
-              potentialTokens: Math.floor(dailySteps / 1000)
+              carbonCredits: (dailySteps / 10000).toFixed(2),
+              potentialTokens: (dailySteps / 1000).toFixed(2)
             };
           }),
           totalSteps: 0,
@@ -70,10 +70,10 @@ const HealthDashboard = ({ healthData, contract }) => {
 
         // Calculate week totals
         acc[weekNumber].totalSteps = acc[weekNumber].days.reduce((sum, day) => sum + day.steps, 0);
-        acc[weekNumber].carbonCredits = Math.floor(acc[weekNumber].totalSteps / 5000);
-        acc[weekNumber].potentialTokens = Math.floor(acc[weekNumber].totalSteps / 1000) + (acc[weekNumber].carbonCredits * 100);
-        acc[weekNumber].carbonSaved = (acc[weekNumber].carbonCredits * 0.5).toFixed(2);
-        acc[weekNumber].treesEquivalent = Math.floor(acc[weekNumber].carbonCredits / 10);
+        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps / 10000).toFixed(2);
+        acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
+        acc[weekNumber].carbonSaved = (parseFloat(acc[weekNumber].carbonCredits) * 0.5).toFixed(2);
+        acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 10);
       }
 
       // Update with actual data if available
@@ -84,18 +84,18 @@ const HealthDashboard = ({ healthData, contract }) => {
         acc[weekNumber].days[adjustedIndex] = {
           ...acc[weekNumber].days[adjustedIndex],
           steps: entry.steps,
-          carbonCredits: Math.floor(entry.steps / 5000),
-          potentialTokens: Math.floor(entry.steps / 1000),
+          carbonCredits: (entry.steps / 10000).toFixed(2),
+          potentialTokens: (entry.steps / 1000).toFixed(2),
           date: date,
           id: date.toISOString()
         };
 
         // Recalculate week totals when actual data is added
         acc[weekNumber].totalSteps = acc[weekNumber].days.reduce((sum, day) => sum + day.steps, 0);
-        acc[weekNumber].carbonCredits = Math.floor(acc[weekNumber].totalSteps / 5000);
-        acc[weekNumber].potentialTokens = Math.floor(acc[weekNumber].totalSteps / 1000) + (acc[weekNumber].carbonCredits * 100);
-        acc[weekNumber].carbonSaved = (acc[weekNumber].carbonCredits * 0.5).toFixed(2);
-        acc[weekNumber].treesEquivalent = Math.floor(acc[weekNumber].carbonCredits / 10);
+        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps / 10000).toFixed(2);
+        acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
+        acc[weekNumber].carbonSaved = (parseFloat(acc[weekNumber].carbonCredits) * 0.5).toFixed(2);
+        acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 10);
       }
 
       return acc;
@@ -166,10 +166,10 @@ const HealthDashboard = ({ healthData, contract }) => {
       field: 'potentialTokens', 
       headerName: 'Daily Tokens', 
       width: 250,
-      valueFormatter: (params) => params.value.toLocaleString(),
+      valueFormatter: (params) => Number(params.value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       renderCell: (params) => (
         <Typography sx={{ fontWeight: 600, color: 'secondary.main' }}>
-          {params.value.toLocaleString()} GRST
+          {Number(params.value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GRST
         </Typography>
       )
     }
@@ -189,8 +189,8 @@ const HealthDashboard = ({ healthData, contract }) => {
   const totalStats = useMemo(() => {
     return Object.values(weeklyData).reduce((acc, week) => ({
       totalSteps: acc.totalSteps + week.totalSteps,
-      totalCarbonCredits: acc.totalCarbonCredits + week.carbonCredits,
-      totalTokens: acc.totalTokens + week.potentialTokens,
+      totalCarbonCredits: acc.totalCarbonCredits + parseFloat(week.carbonCredits),
+      totalTokens: acc.totalTokens + parseFloat(week.potentialTokens),
       totalCarbonSaved: acc.totalCarbonSaved + parseFloat(week.carbonSaved),
       totalTrees: acc.totalTrees + week.treesEquivalent
     }), { totalSteps: 0, totalCarbonCredits: 0, totalTokens: 0, totalCarbonSaved: 0, totalTrees: 0 });
@@ -294,7 +294,8 @@ const HealthDashboard = ({ healthData, contract }) => {
             sx={{ 
               p: 3, 
               textAlign: 'center',
-              background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(0, 122, 255, 0.1) 100%)'
+              background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(0, 122, 255, 0.1) 100%)',
+              height: '100%'
             }}
           >
             <Typography variant="h6" gutterBottom>Total Steps</Typography>
@@ -316,10 +317,18 @@ const HealthDashboard = ({ healthData, contract }) => {
             sx={{ 
               p: 3, 
               textAlign: 'center',
-              background: 'linear-gradient(135deg, rgba(88, 86, 214, 0.1) 0%, rgba(0, 122, 255, 0.1) 100%)'
+              background: 'linear-gradient(135deg, rgba(88, 86, 214, 0.1) 0%, rgba(0, 122, 255, 0.1) 100%)',
+              height: '100%'
             }}
           >
-            <Typography variant="h6" gutterBottom>Carbon Credits Earned</Typography>
+            <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+              <Typography variant="h6" gutterBottom>Carbon Credits Earned</Typography>
+              <Tooltip title={`Carbon Credits = Total Steps / 10000\n${totalStats.totalSteps.toLocaleString()} steps / 10000 = ${Number(totalStats.totalCarbonCredits).toFixed(2)} credits`}>
+                <IconButton size="small">
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
             <Typography 
               variant="h2" 
               sx={{ 
@@ -327,7 +336,7 @@ const HealthDashboard = ({ healthData, contract }) => {
                 fontWeight: 600
               }}
             >
-              {totalStats.totalCarbonCredits.toLocaleString()}
+              {Number(totalStats.totalCarbonCredits).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Saved {totalStats.totalCarbonSaved.toFixed(2)}kg CO2
@@ -341,10 +350,24 @@ const HealthDashboard = ({ healthData, contract }) => {
             sx={{ 
               p: 3, 
               textAlign: 'center',
-              background: 'linear-gradient(135deg, rgba(255, 59, 48, 0.1) 0%, rgba(255, 149, 0, 0.1) 100%)'
+              background: 'linear-gradient(135deg, rgba(255, 59, 48, 0.1) 0%, rgba(255, 149, 0, 0.1) 100%)',
+              height: '100%'
             }}
           >
-            <Typography variant="h6" gutterBottom>Total Tokens Available</Typography>
+            <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+              <Typography variant="h6" gutterBottom>Total Potential Tokens</Typography>
+              <Tooltip 
+                title={
+                  <div style={{ whiteSpace: 'pre-line' }}>
+                    {`Base Tokens = Total Steps / 1000\n${totalStats.totalSteps.toLocaleString()} steps / 1000 = ${(totalStats.totalSteps / 1000).toFixed(2)} tokens\n\nBonus Tokens = Carbon Credits × 100\n${Number(totalStats.totalCarbonCredits).toFixed(2)} credits × 100 = ${(totalStats.totalCarbonCredits * 100).toFixed(2)} tokens\n\nTotal = Base + Bonus = ${Number(totalStats.totalTokens).toFixed(2)} tokens`}
+                  </div>
+                }
+              >
+                <IconButton size="small">
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
             <Typography 
               variant="h2" 
               sx={{ 
@@ -352,7 +375,7 @@ const HealthDashboard = ({ healthData, contract }) => {
                 fontWeight: 600
               }}
             >
-              {totalStats.totalTokens.toLocaleString()}
+              {Number(totalStats.totalTokens).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               ≈ {totalStats.totalTrees} trees worth of impact

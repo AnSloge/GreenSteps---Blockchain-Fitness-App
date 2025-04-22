@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 contract GreenStepsToken is ERC20, Ownable {
     // Conversion rates
     uint256 public stepsPerToken = 1000; // Steps needed for 1 GRST token
-    uint256 public stepsPerCarbonCredit = 5000; // Steps needed for 1 carbon credit
+    uint256 public stepsPerCarbonCredit = 10000; // Steps needed for 1 carbon credit
     uint256 public carbonCreditValue = 100; // Each carbon credit is worth 100 GRST tokens
 
     // Weekly tracking
