@@ -56,7 +56,7 @@ const HealthDashboard = ({ healthData, contract }) => {
               id: dayDate.toISOString(),
               date: dayDate,
               steps: dailySteps,
-              carbonCredits: Math.floor(dailySteps / 5000),
+              carbonCredits: (dailySteps / 5000).toFixed(2),
               potentialTokens: Math.floor(dailySteps / 1000)
             };
           }),
@@ -70,10 +70,10 @@ const HealthDashboard = ({ healthData, contract }) => {
 
         // Calculate week totals
         acc[weekNumber].totalSteps = acc[weekNumber].days.reduce((sum, day) => sum + day.steps, 0);
-        acc[weekNumber].carbonCredits = Math.floor(acc[weekNumber].totalSteps / 5000);
-        acc[weekNumber].potentialTokens = Math.floor(acc[weekNumber].totalSteps / 1000) + (acc[weekNumber].carbonCredits * 100);
-        acc[weekNumber].carbonSaved = (acc[weekNumber].carbonCredits * 0.5).toFixed(2);
-        acc[weekNumber].treesEquivalent = Math.floor(acc[weekNumber].carbonCredits / 10);
+        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps / 5000).toFixed(2);
+        acc[weekNumber].potentialTokens = Math.floor(acc[weekNumber].totalSteps / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100);
+        acc[weekNumber].carbonSaved = (parseFloat(acc[weekNumber].carbonCredits) * 0.5).toFixed(2);
+        acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 10);
       }
 
       // Update with actual data if available
@@ -84,7 +84,7 @@ const HealthDashboard = ({ healthData, contract }) => {
         acc[weekNumber].days[adjustedIndex] = {
           ...acc[weekNumber].days[adjustedIndex],
           steps: entry.steps,
-          carbonCredits: Math.floor(entry.steps / 5000),
+          carbonCredits: (entry.steps / 5000).toFixed(2),
           potentialTokens: Math.floor(entry.steps / 1000),
           date: date,
           id: date.toISOString()
@@ -92,10 +92,10 @@ const HealthDashboard = ({ healthData, contract }) => {
 
         // Recalculate week totals when actual data is added
         acc[weekNumber].totalSteps = acc[weekNumber].days.reduce((sum, day) => sum + day.steps, 0);
-        acc[weekNumber].carbonCredits = Math.floor(acc[weekNumber].totalSteps / 5000);
-        acc[weekNumber].potentialTokens = Math.floor(acc[weekNumber].totalSteps / 1000) + (acc[weekNumber].carbonCredits * 100);
-        acc[weekNumber].carbonSaved = (acc[weekNumber].carbonCredits * 0.5).toFixed(2);
-        acc[weekNumber].treesEquivalent = Math.floor(acc[weekNumber].carbonCredits / 10);
+        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps / 5000).toFixed(2);
+        acc[weekNumber].potentialTokens = Math.floor(acc[weekNumber].totalSteps / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100);
+        acc[weekNumber].carbonSaved = (parseFloat(acc[weekNumber].carbonCredits) * 0.5).toFixed(2);
+        acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 10);
       }
 
       return acc;
@@ -189,7 +189,7 @@ const HealthDashboard = ({ healthData, contract }) => {
   const totalStats = useMemo(() => {
     return Object.values(weeklyData).reduce((acc, week) => ({
       totalSteps: acc.totalSteps + week.totalSteps,
-      totalCarbonCredits: acc.totalCarbonCredits + week.carbonCredits,
+      totalCarbonCredits: acc.totalCarbonCredits + parseFloat(week.carbonCredits),
       totalTokens: acc.totalTokens + week.potentialTokens,
       totalCarbonSaved: acc.totalCarbonSaved + parseFloat(week.carbonSaved),
       totalTrees: acc.totalTrees + week.treesEquivalent
