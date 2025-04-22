@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Box, Typography, Button } from '@mui/material'
+import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Box, Typography, Button, Snackbar, Alert } from '@mui/material'
 import HealthDataUpload from './components/HealthDataUpload'
 import HealthDashboard from './components/HealthDashboard'
 import Web3Connection from './components/Web3Connection'
@@ -129,9 +129,15 @@ function App() {
   const [healthData, setHealthData] = useState(null);
   const [showUpload, setShowUpload] = useState(true);
   const [contract, setContract] = useState(null);
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [error, setError] = useState(null);
   const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
 
   const handleDataUpload = (data) => {
+    if (!walletConnected) {
+      setError('Please connect your wallet before uploading data');
+      return;
+    }
     setHealthData(data);
     setShowUpload(false);
   };
@@ -143,6 +149,17 @@ function App() {
 
   const handleWeb3Connect = (connection) => {
     setContract(connection.contract);
+    setWalletConnected(connection.account !== null);
+    
+    // If wallet is disconnected and we have data, remove the dashboard
+    if (!connection.account && healthData) {
+      setHealthData(null);
+      setShowUpload(true);
+    }
+  };
+
+  const handleCloseError = () => {
+    setError(null);
   };
 
   return (
@@ -186,7 +203,7 @@ function App() {
                   variant="h1" 
                   component="div" 
                   sx={{ 
-                    fontSize: { xs: '1.5rem', sm: '1.75rem' },
+                    fontSize: { xs: '2rem', sm: '2.5rem' },
                     fontWeight: 700,
                     letterSpacing: '-0.025em',
                     lineHeight: 1.1,
@@ -202,10 +219,10 @@ function App() {
                   GreenSteps
                 </Typography>
                 <Typography 
-                  variant="subtitle2"
+                  variant="subtitle1"
                   sx={{ 
                     color: 'text.secondary',
-                    fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                    fontSize: { xs: '1rem', sm: '1.1rem' },
                     letterSpacing: '-0.01em',
                     fontWeight: 400,
                     opacity: 0.85,
@@ -214,7 +231,9 @@ function App() {
                   Track Your Steps, Earn Green Rewards
                 </Typography>
               </Box>
-              <Web3Connection contractAddress={contractAddress} onConnect={handleWeb3Connect} />
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Web3Connection contractAddress={contractAddress} onConnect={handleWeb3Connect} />
+              </Box>
             </Toolbar>
           </Container>
         </AppBar>
@@ -233,7 +252,7 @@ function App() {
         >
           <Container maxWidth="lg">
             {showUpload && (
-              <HealthDataUpload onDataUpload={handleDataUpload} />
+              <HealthDataUpload onDataUpload={handleDataUpload} walletConnected={walletConnected} />
             )}
             {healthData && (
               <>
@@ -262,6 +281,11 @@ function App() {
           </Container>
         </Box>
       </Box>
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseError}>
+        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </ThemeProvider>
   );
 }

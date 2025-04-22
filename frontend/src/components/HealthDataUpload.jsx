@@ -1,63 +1,93 @@
-import React from 'react';
-import { Box, Button, Typography, Paper } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Button, Alert } from '@mui/material';
 
-const HealthDataUpload = ({ onDataUpload }) => {
-  const handleFileUpload = async (event) => {
+const HealthDataUpload = ({ onDataUpload, walletConnected }) => {
+  const [error, setError] = useState(null);
+
+  // Clear error when wallet status changes
+  useEffect(() => {
+    setError(null);
+  }, [walletConnected]);
+
+  const handleFileUpload = (event) => {
+    if (!walletConnected) {
+      setError('Please connect your wallet before uploading data');
+      return;
+    }
+
     const file = event.target.files[0];
     if (!file) return;
 
-    try {
-      const text = await file.text();
-      const data = parseHealthData(text);
-      
-      // Call parent callback with processed data
-      if (onDataUpload) {
-        onDataUpload(data);
-      }
-    } catch (error) {
-      console.error('Error processing file:', error);
-      alert('Error processing file. Please make sure it\'s in the correct format.');
-    }
-  };
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csvData = e.target.result;
+        const lines = csvData.split('\n');
 
-  const parseHealthData = (fileContent) => {
-    // Parse CSV format: date,steps,distance_km,calories
-    const lines = fileContent.split('\n');
-    return lines
-      .slice(1) // Skip header row
-      .filter(line => line.trim())
-      .map(line => {
-        const [date, steps, distance, calories] = line.split(',');
-        return {
-          date: date.trim(),
-          steps: parseInt(steps.trim(), 10),
-          distance: parseFloat(distance.trim()),
-          calories: parseInt(calories.trim(), 10)
-        };
-      });
+        const data = lines.slice(1).map(line => {
+          const values = line.split(',');
+          return {
+            date: values[0],
+            steps: parseInt(values[1]) || 0
+          };
+        }).filter(item => item.date && !isNaN(item.steps));
+
+        onDataUpload(data);
+      } catch {
+        setError('Error processing file. Please make sure it is a valid CSV file.');
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          Upload Health Data
-        </Typography>
-        <Button
-          variant="contained"
-          component="label"
-          sx={{ mb: 2 }}
-        >
-          Upload Health Data
-          <input
-            type="file"
-            hidden
-            accept=".csv"
-            onChange={handleFileUpload}
-          />
-        </Button>
-      </Box>
-    </Paper>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '300px',
+        gap: 2,
+        p: 3,
+        border: '2px dashed',
+        borderColor: 'primary.main',
+        borderRadius: 2,
+        bgcolor: 'background.paper'
+      }}
+    >
+      <Typography variant="h6" component="div" gutterBottom>
+        Upload Your Health Data
+      </Typography>
+      <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
+        {walletConnected 
+          ? 'Select a CSV file to upload your health data'
+          : 'Please connect your wallet before uploading data'}
+      </Typography>
+      <Button
+        variant="contained"
+        component="label"
+        disabled={!walletConnected}
+        sx={{
+          textTransform: 'none',
+          px: 4,
+          py: 1
+        }}
+      >
+        Select CSV File
+        <input
+          type="file"
+          hidden
+          accept=".csv"
+          onChange={handleFileUpload}
+        />
+      </Button>
+      {error && (
+        <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+          {error}
+        </Alert>
+      )}
+    </Box>
   );
 };
 
