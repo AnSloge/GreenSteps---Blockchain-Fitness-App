@@ -128,6 +128,7 @@ const theme = createTheme({
 function App() {
   const [healthData, setHealthData] = useState(null);
   const [showUpload, setShowUpload] = useState(true);
+  const [contract, setContract] = useState(null);
   const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
 
   const handleDataUpload = (data) => {
@@ -138,6 +139,10 @@ function App() {
   const handleRemoveData = () => {
     setHealthData(null);
     setShowUpload(true);
+  };
+
+  const handleWeb3Connect = (connection) => {
+    setContract(connection.contract);
   };
 
   return (
@@ -209,7 +214,7 @@ function App() {
                   Track Your Steps, Earn Green Rewards
                 </Typography>
               </Box>
-              <Web3Connection contractAddress={contractAddress} />
+              <Web3Connection contractAddress={contractAddress} onConnect={handleWeb3Connect} />
             </Toolbar>
           </Container>
         </AppBar>
@@ -232,7 +237,7 @@ function App() {
             )}
             {healthData && (
               <>
-                <HealthDashboard healthData={healthData} />
+                <HealthDashboard healthData={healthData} contract={contract} />
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                   <Button
                     variant="outlined"

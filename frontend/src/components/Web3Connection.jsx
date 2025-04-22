@@ -92,6 +92,37 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
     }
   };
 
+  const disconnectWallet = async () => {
+    try {
+      // Remove all event listeners
+      if (window.ethereum) {
+        window.ethereum.removeAllListeners('accountsChanged');
+        window.ethereum.removeAllListeners('chainChanged');
+      }
+
+      // Reset all states
+      setAccount(null);
+      setProvider(null);
+      setError(null);
+      
+      // Notify parent component
+      if (onConnect) {
+        onConnect({ account: null, contract: null });
+      }
+
+      // Close the menu
+      handleMenuClose();
+
+      // Force MetaMask to disconnect
+      if (window.ethereum && window.ethereum.disconnect) {
+        await window.ethereum.disconnect();
+      }
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error);
+      setError('Failed to disconnect wallet: ' + error.message);
+    }
+  };
+
   const connectWallet = async () => {
     if (!window.ethereum) {
       window.open('https://metamask.io/download/', '_blank');
@@ -101,11 +132,21 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
     setIsLoading(true);
     setError(null);
     try {
+      // Request account access
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts'
       });
+
+      if (accounts.length === 0) {
+        throw new Error('No accounts found');
+      }
+
       const account = accounts[0];
       setAccount(account);
+
+      // Set up provider and contract
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      setProvider(provider);
 
       if (contractAddress) {
         const signer = await provider.getSigner();
@@ -117,19 +158,15 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
       } else {
         throw new Error('Contract address is not set. Please check your environment variables.');
       }
+
+      // Set up event listeners
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      window.ethereum.on('chainChanged', () => window.location.reload());
     } catch (error) {
       console.error('Error connecting wallet:', error);
       setError('Failed to connect wallet: ' + error.message);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const disconnectWallet = () => {
-    setAccount(null);
-    setError(null);
-    if (onConnect) {
-      onConnect({ account: null, contract: null });
     }
   };
 
@@ -163,13 +200,13 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
           horizontal: 'right',
         }}
       >
-        <MenuItem>
+        <MenuItem disabled>
           <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
             {account ? `${account.slice(0, 6)}...${account.slice(-4)}` : ''}
           </Typography>
         </MenuItem>
-        <MenuItem onClick={disconnectWallet}>
-          <Typography>Disconnect</Typography>
+        <MenuItem onClick={disconnectWallet} sx={{ color: 'error.main' }}>
+          <Typography>Disconnect Wallet</Typography>
         </MenuItem>
       </Menu>
 
