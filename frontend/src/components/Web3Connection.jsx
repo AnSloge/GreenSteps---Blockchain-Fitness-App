@@ -5,10 +5,25 @@ import { ethers } from 'ethers';
 
 // Import your contract ABI
 const contractABI = [
-  "function mintFromSteps(address user, uint256 steps, uint256 date) public",
-  "function balanceOf(address account) public view returns (uint256)",
+  // Basic ERC20 functions
+  "function name() public view returns (string)",
   "function symbol() public view returns (string)",
-  "event StepsSubmitted(address indexed user, uint256 steps, uint256 tokens, uint256 date)"
+  "function balanceOf(address account) public view returns (uint256)",
+  
+  // GreenStepsToken specific functions
+  "function submitSteps(address user, uint256 steps, uint256 weekNumber) public",
+  "function claimWeeklyRewards(uint256 weekNumber) public",
+  "function getWeeklyStats(address user, uint256 weekNumber) public view returns (uint256 steps, uint256 carbonCredits, uint256 tokensEarned, bool claimed)",
+  "function getUserStats(address user) public view returns (uint256 totalSteps, uint256 totalCarbonCredits, uint256 totalTokensEarned)",
+  
+  // Conversion rates
+  "function stepsPerToken() public view returns (uint256)",
+  "function stepsPerCarbonCredit() public view returns (uint256)",
+  "function carbonCreditValue() public view returns (uint256)",
+  
+  // Events
+  "event StepsSubmitted(address indexed user, uint256 steps, uint256 carbonCredits, uint256 tokens, uint256 weekNumber)",
+  "event WeeklyRewardsClaimed(address indexed user, uint256 carbonCredits, uint256 tokens, uint256 weekNumber)"
 ];
 
 const Web3Connection = ({ onConnect, contractAddress }) => {
@@ -28,10 +43,10 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
 
   const initializeConnection = useCallback(async () => {
     if (typeof window.ethereum !== 'undefined') {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      setProvider(provider);
-
       try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        setProvider(provider);
+
         const accounts = await window.ethereum.request({
           method: 'eth_accounts'
         });
@@ -47,17 +62,21 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
             if (onConnect) {
               onConnect({ account, contract });
             }
+          } else {
+            setError('Contract address is not set. Please check your environment variables.');
           }
         }
+
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        return () => {
+          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        };
       } catch (error) {
         console.error('Error checking initial connection:', error);
-        setError('Failed to initialize connection');
+        setError('Failed to initialize connection: ' + error.message);
       }
-
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      return () => {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-      };
+    } else {
+      setError('MetaMask is not installed');
     }
   }, [contractAddress, onConnect]);
 
@@ -96,11 +115,11 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
           onConnect({ account, contract });
         }
       } else {
-        setError('Contract address is not set');
+        throw new Error('Contract address is not set. Please check your environment variables.');
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
-      setError('Failed to connect wallet');
+      setError('Failed to connect wallet: ' + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -144,6 +163,11 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
           horizontal: 'right',
         }}
       >
+        <MenuItem>
+          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+            {account ? `${account.slice(0, 6)}...${account.slice(-4)}` : ''}
+          </Typography>
+        </MenuItem>
         <MenuItem onClick={disconnectWallet}>
           <Typography>Disconnect</Typography>
         </MenuItem>

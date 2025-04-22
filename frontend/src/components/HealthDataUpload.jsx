@@ -48,7 +48,7 @@ const HealthDataUpload = ({ onDataUpload }) => {
           component="label"
           sx={{ mb: 2 }}
         >
-          Upload CSV File
+          Upload Health Data
           <input
             type="file"
             hidden

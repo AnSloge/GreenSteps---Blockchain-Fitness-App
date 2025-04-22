@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Box, Typography } from '@mui/material'
+import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Box, Typography, Button } from '@mui/material'
 import HealthDataUpload from './components/HealthDataUpload'
 import HealthDashboard from './components/HealthDashboard'
 import Web3Connection from './components/Web3Connection'
@@ -127,10 +127,17 @@ const theme = createTheme({
 
 function App() {
   const [healthData, setHealthData] = useState(null);
+  const [showUpload, setShowUpload] = useState(true);
   const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
 
   const handleDataUpload = (data) => {
     setHealthData(data);
+    setShowUpload(false);
+  };
+
+  const handleRemoveData = () => {
+    setHealthData(null);
+    setShowUpload(true);
   };
 
   return (
@@ -199,74 +206,59 @@ function App() {
                     opacity: 0.85,
                   }}
                 >
-                  Get Fit. Go Green. Earn Rewards.
+                  Track Your Steps, Earn Green Rewards
                 </Typography>
               </Box>
-              <Box sx={{ flexGrow: 0 }}>
-                <Web3Connection contractAddress={contractAddress} />
-              </Box>
+              <Web3Connection contractAddress={contractAddress} />
             </Toolbar>
           </Container>
         </AppBar>
-        <Toolbar /> {/* Spacer for fixed AppBar */}
-        
-        <Container 
-          maxWidth="lg" 
-          sx={{ 
-            flexGrow: 1, 
-            mt: { xs: 3, sm: 5 },
-            mb: { xs: 3, sm: 5 },
+
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            pt: { xs: '100px', sm: '120px' },
+            pb: { xs: 4, sm: 6 },
             px: { xs: 2, sm: 3 },
             display: 'flex',
             flexDirection: 'column',
-            gap: 4
+            gap: 4,
           }}
         >
-          <Box sx={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr', 
-            gap: { xs: 3, sm: 4 },
-            alignItems: 'start' 
-          }}>
-            <Box sx={{ 
-              bgcolor: 'background.paper',
-              p: { xs: 2, sm: 3 },
-              borderRadius: 4,
-              boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
-            }}>
+          <Container maxWidth="lg">
+            {showUpload && (
               <HealthDataUpload onDataUpload={handleDataUpload} />
-            </Box>
-          </Box>
-
-          {healthData && (
-            <Box sx={{ mt: { xs: 3, sm: 4 } }}>
-              <Typography 
-                variant="h2" 
-                gutterBottom
-                sx={{ 
-                  color: 'text.primary',
-                  mb: { xs: 2, sm: 3 },
-                  fontSize: { xs: '1.75rem', sm: '2rem' },
-                  fontWeight: 500,
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                Your Health Analytics
-              </Typography>
-              <Box sx={{ 
-                bgcolor: 'background.paper',
-                p: { xs: 2, sm: 3 },
-                borderRadius: 4,
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
-              }}>
+            )}
+            {healthData && (
+              <>
                 <HealthDashboard healthData={healthData} />
-              </Box>
-            </Box>
-          )}
-        </Container>
+                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={handleRemoveData}
+                    sx={{
+                      textTransform: 'none',
+                      borderRadius: 2,
+                      px: 3,
+                      py: 1,
+                      '&:hover': {
+                        backgroundColor: 'error.light',
+                        color: 'white',
+                      }
+                    }}
+                  >
+                    Remove Data
+                  </Button>
+                </Box>
+              </>
+            )}
+          </Container>
+        </Box>
       </Box>
     </ThemeProvider>
-  )
+  );
 }
 
-export default App
+export default App;

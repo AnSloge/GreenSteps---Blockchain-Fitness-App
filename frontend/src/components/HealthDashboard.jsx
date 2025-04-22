@@ -130,13 +130,13 @@ const HealthDashboard = ({ healthData, contract }) => {
     {
       field: 'date',
       headerName: 'Day',
-      width: 180,
+      width: 320,
       valueFormatter: (params) => getDayName(params.value)
     },
     { 
       field: 'steps', 
       headerName: 'Steps', 
-      width: 150,
+      width: 250,
       valueFormatter: (params) => params.value.toLocaleString(),
       renderCell: (params) => (
         <Typography sx={{ fontWeight: 600, color: params.value > 0 ? 'success.main' : 'text.secondary' }}>
@@ -147,7 +147,7 @@ const HealthDashboard = ({ healthData, contract }) => {
     { 
       field: 'carbonCredits', 
       headerName: 'Carbon Credits', 
-      width: 150,
+      width: 250,
       valueFormatter: (params) => params.value.toLocaleString(),
       renderCell: (params) => (
         <Stack direction="row" alignItems="center" spacing={1}>
@@ -165,7 +165,7 @@ const HealthDashboard = ({ healthData, contract }) => {
     { 
       field: 'potentialTokens', 
       headerName: 'Daily Tokens', 
-      width: 150,
+      width: 250,
       valueFormatter: (params) => params.value.toLocaleString(),
       renderCell: (params) => (
         <Typography sx={{ fontWeight: 600, color: 'secondary.main' }}>
@@ -416,18 +416,24 @@ const HealthDashboard = ({ healthData, contract }) => {
               }}
               sx={{
                 border: 'none',
+                width: '100%',
                 '& .MuiDataGrid-cell': {
                   fontSize: '0.9rem',
-                  py: 2
+                  py: 2,
+                  px: 3
                 },
                 '& .MuiDataGrid-columnHeader': {
                   backgroundColor: 'rgba(0, 122, 255, 0.1)',
                   color: 'primary.main',
                   fontWeight: 600,
-                  fontSize: '0.9rem'
+                  fontSize: '0.9rem',
+                  px: 3
                 },
                 '& .MuiDataGrid-row:hover': {
                   backgroundColor: 'rgba(0, 122, 255, 0.05)'
+                },
+                '& .MuiDataGrid-row:nth-of-type(even)': {
+                  backgroundColor: 'rgba(0, 122, 255, 0.02)'
                 }
               }}
             />
