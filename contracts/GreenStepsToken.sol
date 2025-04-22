@@ -6,48 +6,179 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract GreenStepsToken is ERC20, Ownable {
-    // Conversion rate: steps to tokens (can be adjusted)
-    uint256 public stepsPerToken = 1000;
+    // Conversion rates
+    uint256 public stepsPerToken = 1000; // Steps needed for 1 GRST token
+    uint256 public stepsPerCarbonCredit = 5000; // Steps needed for 1 carbon credit
+    uint256 public carbonCreditValue = 100; // Each carbon credit is worth 100 GRST tokens
 
-    // Mapping to track daily step submissions
-    mapping(address => mapping(uint256 => bool)) public dailySubmissions;
+    // Weekly tracking
+    struct WeeklyStats {
+        uint256 steps;
+        uint256 carbonCredits;
+        uint256 tokensEarned;
+        bool claimed;
+    }
+
+    // User stats
+    struct UserStats {
+        uint256 totalSteps;
+        uint256 totalCarbonCredits;
+        uint256 totalTokensEarned;
+        mapping(uint256 => WeeklyStats) weeklyStats; // weekNumber => WeeklyStats
+    }
+
+    // Mappings
+    mapping(address => UserStats) public userStats;
+    mapping(uint256 => bool) public weeklySubmissions; // weekNumber => submitted
+
+    // Events
+    event StepsSubmitted(
+        address indexed user,
+        uint256 steps,
+        uint256 carbonCredits,
+        uint256 tokens,
+        uint256 weekNumber
+    );
+    event WeeklyRewardsClaimed(
+        address indexed user,
+        uint256 carbonCredits,
+        uint256 tokens,
+        uint256 weekNumber
+    );
+    event StepsPerTokenUpdated(uint256 newStepsPerToken);
+    event StepsPerCarbonCreditUpdated(uint256 newStepsPerCarbonCredit);
+    event CarbonCreditValueUpdated(uint256 newCarbonCreditValue);
 
     constructor() ERC20("GreenSteps", "GRST") Ownable(msg.sender) {}
 
-    // Function to mint tokens based on steps
-    function mintFromSteps(
+    // Function to submit steps for a specific week
+    function submitSteps(
         address user,
         uint256 steps,
-        uint256 date
+        uint256 weekNumber
     ) public onlyOwner {
         require(
-            !dailySubmissions[user][date],
-            "Steps already submitted for this date"
+            !weeklySubmissions[weekNumber],
+            "Steps already submitted for this week"
         );
         require(steps > 0, "Steps must be greater than 0");
 
-        // Calculate tokens with precision
-        uint256 tokensToMint = (steps * (10 ** decimals())) / stepsPerToken;
-        _mint(user, tokensToMint);
+        UserStats storage stats = userStats[user];
+        WeeklyStats storage weekly = stats.weeklyStats[weekNumber];
 
-        dailySubmissions[user][date] = true;
+        // Update weekly stats
+        weekly.steps = steps;
+        weekly.carbonCredits = steps / stepsPerCarbonCredit;
+        weekly.tokensEarned =
+            (steps / stepsPerToken) +
+            (weekly.carbonCredits * carbonCreditValue);
+        weekly.claimed = false;
 
-        emit StepsSubmitted(user, steps, tokensToMint, date);
+        // Update total stats
+        stats.totalSteps += steps;
+        stats.totalCarbonCredits += weekly.carbonCredits;
+        stats.totalTokensEarned += weekly.tokensEarned;
+
+        weeklySubmissions[weekNumber] = true;
+
+        emit StepsSubmitted(
+            user,
+            steps,
+            weekly.carbonCredits,
+            weekly.tokensEarned,
+            weekNumber
+        );
     }
 
-    // Function to update steps per token ratio
+    // Function to claim weekly rewards
+    function claimWeeklyRewards(uint256 weekNumber) public {
+        UserStats storage stats = userStats[msg.sender];
+        WeeklyStats storage weekly = stats.weeklyStats[weekNumber];
+
+        require(weekly.steps > 0, "No steps submitted for this week");
+        require(!weekly.claimed, "Rewards already claimed for this week");
+
+        // Mint tokens
+        _mint(msg.sender, weekly.tokensEarned);
+        weekly.claimed = true;
+
+        emit WeeklyRewardsClaimed(
+            msg.sender,
+            weekly.carbonCredits,
+            weekly.tokensEarned,
+            weekNumber
+        );
+    }
+
+    // Function to get user's weekly stats
+    function getWeeklyStats(
+        address user,
+        uint256 weekNumber
+    )
+        public
+        view
+        returns (
+            uint256 steps,
+            uint256 carbonCredits,
+            uint256 tokensEarned,
+            bool claimed
+        )
+    {
+        WeeklyStats storage weekly = userStats[user].weeklyStats[weekNumber];
+        return (
+            weekly.steps,
+            weekly.carbonCredits,
+            weekly.tokensEarned,
+            weekly.claimed
+        );
+    }
+
+    // Function to get user's total stats
+    function getUserStats(
+        address user
+    )
+        public
+        view
+        returns (
+            uint256 totalSteps,
+            uint256 totalCarbonCredits,
+            uint256 totalTokensEarned
+        )
+    {
+        UserStats storage stats = userStats[user];
+        return (
+            stats.totalSteps,
+            stats.totalCarbonCredits,
+            stats.totalTokensEarned
+        );
+    }
+
+    // Admin functions to update conversion rates
     function updateStepsPerToken(uint256 newStepsPerToken) public onlyOwner {
         require(newStepsPerToken > 0, "Steps per token must be greater than 0");
         stepsPerToken = newStepsPerToken;
         emit StepsPerTokenUpdated(newStepsPerToken);
     }
 
-    // Events
-    event StepsSubmitted(
-        address indexed user,
-        uint256 steps,
-        uint256 tokens,
-        uint256 date
-    );
-    event StepsPerTokenUpdated(uint256 newStepsPerToken);
+    function updateStepsPerCarbonCredit(
+        uint256 newStepsPerCarbonCredit
+    ) public onlyOwner {
+        require(
+            newStepsPerCarbonCredit > 0,
+            "Steps per carbon credit must be greater than 0"
+        );
+        stepsPerCarbonCredit = newStepsPerCarbonCredit;
+        emit StepsPerCarbonCreditUpdated(newStepsPerCarbonCredit);
+    }
+
+    function updateCarbonCreditValue(
+        uint256 newCarbonCreditValue
+    ) public onlyOwner {
+        require(
+            newCarbonCreditValue > 0,
+            "Carbon credit value must be greater than 0"
+        );
+        carbonCreditValue = newCarbonCreditValue;
+        emit CarbonCreditValueUpdated(newCarbonCreditValue);
+    }
 }

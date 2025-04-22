@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Box, Typography } from '@mui/material'
 import HealthDataUpload from './components/HealthDataUpload'
 import HealthDashboard from './components/HealthDashboard'
-import AndroidHealthConnect from './components/AndroidHealthConnect'
 import Web3Connection from './components/Web3Connection'
 import './App.css'
 
@@ -71,9 +70,6 @@ const theme = createTheme({
       fontWeight: 500,
     },
   },
-  shape: {
-    borderRadius: 12,
-  },
   components: {
     MuiAppBar: {
       styleOverrides: {
@@ -134,10 +130,6 @@ function App() {
   const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
 
   const handleDataUpload = (data) => {
-    setHealthData(data);
-  };
-
-  const handleHealthConnectData = (data) => {
     setHealthData(data);
   };
 
@@ -232,18 +224,10 @@ function App() {
         >
           <Box sx={{ 
             display: 'grid', 
-            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, 
+            gridTemplateColumns: '1fr', 
             gap: { xs: 3, sm: 4 },
             alignItems: 'start' 
           }}>
-            <Box sx={{ 
-              bgcolor: 'background.paper',
-              p: { xs: 2, sm: 3 },
-              borderRadius: 4,
-              boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
-            }}>
-              <AndroidHealthConnect onDataReceived={handleHealthConnectData} />
-            </Box>
             <Box sx={{ 
               bgcolor: 'background.paper',
               p: { xs: 2, sm: 3 },
