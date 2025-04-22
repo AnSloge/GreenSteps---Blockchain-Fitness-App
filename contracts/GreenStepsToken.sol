@@ -17,6 +17,7 @@ contract GreenStepsToken is ERC20, Ownable {
         uint256 carbonCredits;
         uint256 tokensEarned;
         bool claimed;
+        bool submitted;
     }
 
     // User stats
@@ -29,7 +30,6 @@ contract GreenStepsToken is ERC20, Ownable {
 
     // Mappings
     mapping(address => UserStats) public userStats;
-    mapping(uint256 => bool) public weeklySubmissions; // weekNumber => submitted
 
     // Events
     event StepsSubmitted(
@@ -57,14 +57,11 @@ contract GreenStepsToken is ERC20, Ownable {
         uint256 steps,
         uint256 weekNumber
     ) public onlyOwner {
-        require(
-            !weeklySubmissions[weekNumber],
-            "Steps already submitted for this week"
-        );
-        require(steps > 0, "Steps must be greater than 0");
-
         UserStats storage stats = userStats[user];
         WeeklyStats storage weekly = stats.weeklyStats[weekNumber];
+
+        require(!weekly.submitted, "Steps already submitted for this week");
+        require(steps > 0, "Steps must be greater than 0");
 
         // Update weekly stats
         weekly.steps = steps;
@@ -73,13 +70,12 @@ contract GreenStepsToken is ERC20, Ownable {
             (steps / stepsPerToken) +
             (weekly.carbonCredits * carbonCreditValue);
         weekly.claimed = false;
+        weekly.submitted = true;
 
         // Update total stats
         stats.totalSteps += steps;
         stats.totalCarbonCredits += weekly.carbonCredits;
         stats.totalTokensEarned += weekly.tokensEarned;
-
-        weeklySubmissions[weekNumber] = true;
 
         emit StepsSubmitted(
             user,
@@ -95,7 +91,7 @@ contract GreenStepsToken is ERC20, Ownable {
         UserStats storage stats = userStats[msg.sender];
         WeeklyStats storage weekly = stats.weeklyStats[weekNumber];
 
-        require(weekly.steps > 0, "No steps submitted for this week");
+        require(weekly.submitted, "No steps submitted for this week");
         require(!weekly.claimed, "Rewards already claimed for this week");
 
         // Mint tokens
