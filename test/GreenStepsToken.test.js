@@ -7,6 +7,8 @@ describe("GreenStepsToken", function () {
   let owner;
   let user1;
   let user2;
+  let ADMIN_ROLE;
+  let VALIDATOR_ROLE;
 
   beforeEach(async function () {
     [owner, user1, user2] = await ethers.getSigners();
@@ -14,6 +16,10 @@ describe("GreenStepsToken", function () {
     GreenStepsToken = await ethers.getContractFactory("GreenStepsToken");
     token = await GreenStepsToken.deploy();
     await token.waitForDeployment();
+    
+    // Get role hashes
+    ADMIN_ROLE = await token.ADMIN_ROLE();
+    VALIDATOR_ROLE = await token.VALIDATOR_ROLE();
   });
 
   describe("Deployment", function () {
@@ -41,17 +47,19 @@ describe("GreenStepsToken", function () {
       await token.submitSteps(user1.address, steps, weekNumber);
       const stats = await token.getWeeklyStats(user1.address, weekNumber);
       
-      expect(stats.steps).to.equal(steps);
-      expect(stats.carbonCredits).to.equal(Math.floor(steps / 10000));
-      expect(stats.tokensEarned).to.equal(
-        Math.floor(steps / 1000) + (Math.floor(steps / 10000) * 100)
-      );
-      expect(stats.claimed).to.equal(false);
+      expect(stats[0]).to.equal(steps); // steps
+      expect(stats[1]).to.equal((steps * 100) / 10000); // carbonCredits with 2 decimal places
+      
+      // tokensEarned calculation with 2 decimal places
+      const expectedTokensEarned = ((steps * 100) / 1000) + (((steps * 100) / 10000) * 100);
+      expect(stats[2]).to.equal(expectedTokensEarned);
+      
+      expect(stats[3]).to.equal(false); // claimed
     });
 
     it("Should emit StepsSubmitted event", async function () {
-      const expectedCarbonCredits = Math.floor(steps / 10000);
-      const expectedTokens = Math.floor(steps / 1000) + (expectedCarbonCredits * 100);
+      const expectedCarbonCredits = (steps * 100) / 10000; // with 2 decimal places
+      const expectedTokens = ((steps * 100) / 1000) + (expectedCarbonCredits * 100);
       
       await expect(token.submitSteps(user1.address, steps, weekNumber))
         .to.emit(token, "StepsSubmitted")
@@ -74,7 +82,7 @@ describe("GreenStepsToken", function () {
     it("Should not allow non-owner to submit steps", async function () {
       await expect(
         token.connect(user1).submitSteps(user1.address, steps, weekNumber)
-      ).to.be.revertedWithCustomError(token, "OwnableUnauthorizedAccount");
+      ).to.be.revertedWith("Caller is not a validator or owner");
     });
   });
 
@@ -89,16 +97,16 @@ describe("GreenStepsToken", function () {
     it("Should allow claiming rewards", async function () {
       await token.connect(user1).claimWeeklyRewards(weekNumber);
       const stats = await token.getWeeklyStats(user1.address, weekNumber);
-      expect(stats.claimed).to.equal(true);
+      expect(stats[3]).to.equal(true); // claimed status
       
-      const expectedCarbonCredits = Math.floor(steps / 10000);
-      const expectedTokens = Math.floor(steps / 1000) + (expectedCarbonCredits * 100);
+      const expectedCarbonCredits = (steps * 100) / 10000;
+      const expectedTokens = ((steps * 100) / 1000) + (expectedCarbonCredits * 100);
       expect(await token.balanceOf(user1.address)).to.equal(expectedTokens);
     });
 
     it("Should emit WeeklyRewardsClaimed event", async function () {
-      const expectedCarbonCredits = Math.floor(steps / 10000);
-      const expectedTokens = Math.floor(steps / 1000) + (expectedCarbonCredits * 100);
+      const expectedCarbonCredits = (steps * 100) / 10000;
+      const expectedTokens = ((steps * 100) / 1000) + (expectedCarbonCredits * 100);
       
       await expect(token.connect(user1).claimWeeklyRewards(weekNumber))
         .to.emit(token, "WeeklyRewardsClaimed")
@@ -133,14 +141,19 @@ describe("GreenStepsToken", function () {
 
     it("Should track total stats correctly", async function () {
       const stats = await token.getUserStats(user1.address);
-      expect(stats.totalSteps).to.equal(steps1 + steps2);
-      expect(stats.totalCarbonCredits).to.equal(
-        Math.floor(steps1 / 10000) + Math.floor(steps2 / 10000)
-      );
-      expect(stats.totalTokensEarned).to.equal(
-        Math.floor(steps1 / 1000) + Math.floor(steps2 / 1000) +
-        (Math.floor(steps1 / 10000) * 100) + (Math.floor(steps2 / 10000) * 100)
-      );
+      expect(stats[0]).to.equal(steps1 + steps2); // totalSteps
+      
+      // totalCarbonCredits with 2 decimal places
+      const expectedCarbonCredits = ((steps1 * 100) / 10000) + ((steps2 * 100) / 10000);
+      expect(stats[1]).to.equal(expectedCarbonCredits);
+      
+      // totalTokensEarned with 2 decimal places
+      const carbonCredits1 = (steps1 * 100) / 10000;
+      const carbonCredits2 = (steps2 * 100) / 10000;
+      const expectedTokens = 
+        ((steps1 * 100) / 1000) + ((steps2 * 100) / 1000) +
+        (carbonCredits1 * 100) + (carbonCredits2 * 100);
+      expect(stats[2]).to.equal(expectedTokens);
     });
 
     it("Should handle multiple users correctly", async function () {
@@ -149,8 +162,8 @@ describe("GreenStepsToken", function () {
       const stats1 = await token.getUserStats(user1.address);
       const stats2 = await token.getUserStats(user2.address);
       
-      expect(stats1.totalSteps).to.equal(steps1 + steps2);
-      expect(stats2.totalSteps).to.equal(steps1);
+      expect(stats1[0]).to.equal(steps1 + steps2); // totalSteps
+      expect(stats2[0]).to.equal(steps1); // totalSteps
     });
   });
 
@@ -162,7 +175,7 @@ describe("GreenStepsToken", function () {
     });
 
     it("Should allow owner to update steps per carbon credit ratio", async function () {
-      const newRatio = 10000;
+      const newRatio = 15000;
       await token.updateStepsPerCarbonCredit(newRatio);
       expect(await token.stepsPerCarbonCredit()).to.equal(newRatio);
     });
@@ -173,18 +186,18 @@ describe("GreenStepsToken", function () {
       expect(await token.carbonCreditValue()).to.equal(newValue);
     });
 
-    it("Should not allow non-owner to update ratios", async function () {
+    it("Should not allow non-admin to update ratios", async function () {
       await expect(
         token.connect(user1).updateStepsPerToken(2000)
-      ).to.be.revertedWithCustomError(token, "OwnableUnauthorizedAccount");
+      ).to.be.revertedWithCustomError(token, "AccessControlUnauthorizedAccount");
       
       await expect(
-        token.connect(user1).updateStepsPerCarbonCredit(10000)
-      ).to.be.revertedWithCustomError(token, "OwnableUnauthorizedAccount");
+        token.connect(user1).updateStepsPerCarbonCredit(15000)
+      ).to.be.revertedWithCustomError(token, "AccessControlUnauthorizedAccount");
       
       await expect(
         token.connect(user1).updateCarbonCreditValue(200)
-      ).to.be.revertedWithCustomError(token, "OwnableUnauthorizedAccount");
+      ).to.be.revertedWithCustomError(token, "AccessControlUnauthorizedAccount");
     });
 
     it("Should not allow setting ratios to zero", async function () {
