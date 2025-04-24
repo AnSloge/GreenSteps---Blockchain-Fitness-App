@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -16,17 +16,24 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import { Info as InfoIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
+import { Info as InfoIcon, EmojiEvents as TrophyIcon, Send as SendIcon } from '@mui/icons-material';
 
-const HealthDashboard = ({ healthData, contract }) => {
+const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
   const theme = useTheme();
   const [selectedWeek, setSelectedWeek] = useState(null);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [claimedWeeks, setClaimedWeeks] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   // Group data by week
   const weeklyData = useMemo(() => {
@@ -102,27 +109,234 @@ const HealthDashboard = ({ healthData, contract }) => {
     }, {});
   }, [healthData]);
 
-  // Set initial selected week
-  useState(() => {
+  // Update selected week when health data changes
+  useEffect(() => {
+    // Select the most recent week when weekly data is available
     if (Object.keys(weeklyData).length > 0) {
       setSelectedWeek(Math.max(...Object.keys(weeklyData)));
-  }
+    }
   }, [weeklyData]);
 
-  const handleClaimRewards = async (weekNum) => {
-    if (!contract) {
-      alert('Please connect your wallet first');
+  // Sjekk hvilke uker som er claimed for gjeldende konto når contract endres
+  useEffect(() => {
+    const checkClaimedWeeks = async () => {
+      if (!contract || !window.ethereum) return;
+      
+      try {
+        const weekNumbers = Object.keys(weeklyData);
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (!accounts || accounts.length === 0) return;
+        
+        const userAddress = accounts[0];
+        const claimed = {};
+        
+        for (const weekNum of weekNumbers) {
+          const stats = await contract.getWeeklyStats(userAddress, weekNum);
+          if (stats[3]) { // claimed status
+            claimed[weekNum] = true;
+          }
+        }
+        
+        setClaimedWeeks(claimed);
+      } catch (error) {
+        console.error("Error checking claimed weeks:", error);
+      }
+    };
+    
+    checkClaimedWeeks();
+  }, [contract, weeklyData]);
+
+  // Funksjon for å sende stegdata til smart-kontrakten
+  const handleSubmitSteps = async (weekNum) => {
+    if (!contract || !window.ethereum) {
+      setSnackbar({
+        open: true,
+        message: "Wallet not connected or contract not loaded",
+        severity: "error"
+      });
       return;
     }
     
+    setIsSubmitting(true);
+    
     try {
-      const tx = await contract.claimWeeklyRewards(weekNum);
-      await tx.wait();
-      weeklyData[weekNum].claimed = true;
-      setClaimDialogOpen(false);
+      const weekData = weeklyData[weekNum];
+      if (!weekData) {
+        setSnackbar({
+          open: true,
+          message: "No data found for selected week",
+          severity: "error"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Sjekk om steg allerede er sendt for denne uken
+      const weeklyStats = await contract.getWeeklyStats(window.ethereum.selectedAddress, weekNum);
+      if (Number(weeklyStats[0]) > 0) {
+        setSnackbar({
+          open: true,
+          message: "Steps already submitted for this week",
+          severity: "warning"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Hent active account
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (!accounts || accounts.length === 0) {
+        setSnackbar({
+          open: true,
+          message: "No connected account found",
+          severity: "error"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const userAddress = accounts[0];
+      
+      // Send stegdata til kontrakten
+      const tx = await contract.submitSteps(
+        userAddress,
+        Math.round(weekData.totalSteps),
+        weekNum
+      );
+      
+      setSnackbar({
+        open: true,
+        message: "Transaction sent! Waiting for confirmation...",
+        severity: "info"
+      });
+      
+      // Vent på at transaksjonen blir bekreftet
+      const receipt = await tx.wait();
+      
+      setSnackbar({
+        open: true,
+        message: "Steps successfully submitted to the blockchain!",
+        severity: "success"
+      });
+      
+      setSubmitDialogOpen(false);
+      console.log("Steps submitted:", receipt);
     } catch (error) {
-      console.error('Error claiming rewards:', error);
-      alert('Failed to claim rewards. Please try again.');
+      console.error("Error submitting steps:", error);
+      
+      let errorMessage = "Error submitting steps";
+      
+      if (error.code === 'ACTION_REJECTED') {
+        errorMessage = "Transaction was rejected in your wallet";
+      } else if (error.message?.includes("Steps already submitted")) {
+        errorMessage = "Steps have already been submitted for this week";
+      } else if (error.message?.includes("caller is not the owner")) {
+        errorMessage = "Only the contract owner can submit steps. Please contact the admin.";
+      } else {
+        errorMessage = `Error: ${error.message || "Unknown error"}`;
+      }
+      
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: "error"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClaimRewards = async (weekNum) => {
+    if (!contract) {
+      alert("Please connect your wallet to claim rewards");
+      return;
+    }
+    
+    // Convert weekNum to a number to ensure proper formatting
+    weekNum = Number(weekNum);
+    setIsClaiming(true);
+    
+    try {
+      // Check if steps have been submitted for this week
+      const weeklyStats = await contract.getWeeklyStats(window.ethereum.selectedAddress, weekNum);
+      console.log("Weekly data from contract:", weeklyStats);
+      
+      if (Number(weeklyStats[0]) === 0) {
+        alert("No steps have been submitted for this week in the smart contract");
+        setIsClaiming(false);
+        return;
+      }
+
+      if (weeklyStats[3]) {
+        alert("Rewards for this week have already been claimed");
+        
+        // Update UI to reflect claimed status
+        setClaimedWeeks(prev => ({
+          ...prev,
+          [weekNum]: true
+        }));
+        
+        setClaimDialogOpen(false);
+        setIsClaiming(false);
+        return;
+      }
+
+      // Claim rewards using the correct function from the contract
+      console.log(`Claiming rewards for week ${weekNum}`);
+      const tx = await contract.claimWeeklyRewards(weekNum);
+      console.log("Transaction sent:", tx.hash);
+      
+      // Wait for transaction to be mined
+      const receipt = await tx.wait();
+      console.log("Transaction confirmed:", receipt);
+      
+      // Update claimed weeks status
+      setClaimedWeeks(prev => ({
+        ...prev,
+        [weekNum]: true
+      }));
+      
+      // Close dialog after successful claim
+      setClaimDialogOpen(false);
+      
+      // Get the amount of tokens earned for this week
+      const tokenAmount = Number(weeklyStats[2]) / 100; // Tokens are stored with 2 decimal places
+
+      // Notify parent component about claimed tokens
+      if (onRewardsClaimed) {
+        onRewardsClaimed(tokenAmount);
+      }
+      
+      // Show success message with token amount
+      setSnackbar({
+        open: true,
+        message: `Successfully claimed ${tokenAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GRST tokens for week ${weekNum}!`,
+        severity: "success"
+      });
+    } catch (error) {
+      console.error("Error claiming rewards:", error);
+      
+      if (error.code === 'ACTION_REJECTED') {
+        setSnackbar({
+          open: true,
+          message: "Transaction was rejected in your wallet. Please try again.",
+          severity: "error"
+        });
+      } else if (error.message?.includes("already claimed")) {
+        setSnackbar({
+          open: true,
+          message: "Rewards for this week have already been claimed.",
+          severity: "warning"
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: `Error claiming rewards: ${error.message}`,
+          severity: "error"
+        });
+      }
+    } finally {
+      setIsClaiming(false);
     }
   };
 
@@ -400,22 +614,45 @@ const HealthDashboard = ({ healthData, contract }) => {
                       .map((week) => (
                         <MenuItem key={week.weekNumber} value={week.weekNumber}>
                           Week {week.weekNumber} ({week.startDate.toLocaleDateString()} - {week.endDate.toLocaleDateString()})
+                          {claimedWeeks[week.weekNumber] && 
+                            <Typography component="span" sx={{ ml: 1, color: 'success.main', fontSize: '0.75rem' }}>
+                              ✓ Claimed
+                            </Typography>
+                          }
                         </MenuItem>
                       ))}
                   </Select>
                 </FormControl>
-                {currentWeekData && !currentWeekData.claimed && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<TrophyIcon />}
-                    onClick={() => {
-                      setSelectedWeek(currentWeekData.weekNumber);
-                      setClaimDialogOpen(true);
-                    }}
-                  >
-                    Claim Week {currentWeekData.weekNumber}
-                  </Button>
+                {currentWeekData && (
+                  <>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      startIcon={<SendIcon />}
+                      onClick={() => {
+                        setSelectedWeek(currentWeekData.weekNumber);
+                        setSubmitDialogOpen(true);
+                      }}
+                      sx={{ mr: 1 }}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit Steps'}
+                    </Button>
+                    {!claimedWeeks[currentWeekData?.weekNumber] && (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<TrophyIcon />}
+                        onClick={() => {
+                          setSelectedWeek(currentWeekData.weekNumber);
+                          setClaimDialogOpen(true);
+                        }}
+                        disabled={isClaiming}
+                      >
+                        {isClaiming ? 'Claiming...' : 'Claim Rewards'}
+                      </Button>
+                    )}
+                  </>
                 )}
               </Box>
             </Box>
@@ -510,6 +747,67 @@ const HealthDashboard = ({ healthData, contract }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Dialog for å sende stegdata til smart-kontrakten */}
+      <Dialog 
+        open={submitDialogOpen} 
+        onClose={() => !isSubmitting && setSubmitDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxWidth: 400
+          }
+        }}
+      >
+        <DialogTitle>Submit Weekly Steps to Blockchain</DialogTitle>
+        <DialogContent>
+          {selectedWeek && weeklyData[selectedWeek] && (
+            <>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                You are about to submit step data for Week {selectedWeek} to the blockchain:
+              </Typography>
+              <Stack spacing={1}>
+                <Typography variant="body2">
+                  • {weeklyData[selectedWeek].totalSteps.toLocaleString()} Total Steps
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  This action can only be performed by the contract owner.
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  After submitting steps to the blockchain, you will be able to claim your rewards.
+                </Typography>
+              </Stack>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSubmitDialogOpen(false)} disabled={isSubmitting}>Cancel</Button>
+          <Button 
+            onClick={() => handleSubmitSteps(selectedWeek)}
+            variant="contained" 
+            color="primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit to Blockchain'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Snackbar for meldinger */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

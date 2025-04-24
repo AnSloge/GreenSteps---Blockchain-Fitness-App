@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, IconButton, Tooltip, Menu, MenuItem, Typography, Button, Snackbar, Alert } from '@mui/material';
-import { AccountBalanceWallet, AccountBalanceWalletOutlined } from '@mui/icons-material';
+import { Box, IconButton, Tooltip, Menu, MenuItem, Typography, Button, Snackbar, Alert, Badge, Chip } from '@mui/material';
+import { AccountBalanceWallet, AccountBalanceWalletOutlined, LocalAtm } from '@mui/icons-material';
 import { ethers } from 'ethers';
 
 // Import contractABI from the utils file
@@ -55,6 +55,8 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('info');
+  const [tokenBalance, setTokenBalance] = useState(0);
+  const [contract, setContractInstance] = useState(null);
 
   // Listen for account and chain changes
   useEffect(() => {
@@ -103,6 +105,29 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
       };
     }
   }, [account, contractAddress]);
+
+  // Fetch token balance periodically
+  useEffect(() => {
+    if (!account || !contract) return;
+
+    const fetchTokenBalance = async () => {
+      try {
+        const balance = await contract.balanceOf(account);
+        // Token balance is stored with 2 decimal places (multiplied by 100 in the contract)
+        setTokenBalance(Number(balance) / 100);
+      } catch (error) {
+        console.error('Failed to fetch token balance:', error);
+      }
+    };
+
+    // Fetch initial balance
+    fetchTokenBalance();
+
+    // Set up interval to update balance every 30 seconds
+    const intervalId = setInterval(fetchTokenBalance, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [account, contract]);
 
   // Show alerts
   const showAlert = (message, severity = 'info') => {
@@ -177,10 +202,23 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+      const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
+      
+      // Store contract instance for token balance checks
+      setContractInstance(contractInstance);
 
       if (onConnect) {
-        onConnect({ account: accountAddress, contract });
+        onConnect({ account: accountAddress, contract: contractInstance });
+      }
+
+      // Fetch initial token balance
+      if (accountAddress) {
+        try {
+          const balance = await contractInstance.balanceOf(accountAddress);
+          setTokenBalance(Number(balance) / 100);
+        } catch (err) {
+          console.error('Failed to get initial token balance:', err);
+        }
       }
     } catch (error) {
       console.error('Error setting up contract:', error);
@@ -248,7 +286,39 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
   ];
 
   return (
-    <Box>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      {account && (
+        <Tooltip title="Your GRST Token Balance">
+          <Chip
+            icon={<LocalAtm />}
+            label={`${tokenBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GRST`}
+            color="secondary"
+            sx={{
+              borderRadius: 2,
+              height: 40,
+              py: 0.5,
+              px: 1,
+              fontWeight: 500,
+              '& .MuiChip-icon': {
+                color: 'inherit',
+              },
+              transition: 'all 0.2s',
+              animation: tokenBalance > 0 ? 'pulse 2s infinite' : 'none',
+              '@keyframes pulse': {
+                '0%': {
+                  boxShadow: '0 0 0 0 rgba(88, 86, 214, 0.7)',
+                },
+                '70%': {
+                  boxShadow: '0 0 0 6px rgba(88, 86, 214, 0)',
+                },
+                '100%': {
+                  boxShadow: '0 0 0 0 rgba(88, 86, 214, 0)',
+                },
+              },
+            }}
+          />
+        </Tooltip>
+      )}
       <Tooltip title={account ? "Connected Wallet" : "Connect Wallet"}>
         <Button
           variant={account ? "contained" : "outlined"}

@@ -132,6 +132,7 @@ function App() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [error, setError] = useState(null);
   const [showHeader, setShowHeader] = useState(true);
+  const [account, setAccount] = useState(null);
   const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
 
   // Track scroll position to show/hide header
@@ -162,6 +163,7 @@ function App() {
 
   const handleWeb3Connect = (connection) => {
     setContract(connection.contract);
+    setAccount(connection.account);
     setWalletConnected(connection.account !== null);
     
     // If wallet is disconnected and we have data, remove the dashboard
@@ -169,6 +171,13 @@ function App() {
       setHealthData(null);
       setShowUpload(true);
     }
+  };
+
+  // Denne funksjonen mottar tokens-mengden fra HealthDashboard når belønninger kreves.
+  // Web3Connection-komponenten viser allerede saldoen, så vi trenger ikke å lagre det separat.
+  const handleRewardsClaimed = () => {
+    // Vi trenger ikke å gjøre noe her siden Web3Connection automatisk oppdaterer saldoen
+    console.log('Rewards claimed successfully');
   };
 
   const handleCloseError = () => {
@@ -273,7 +282,12 @@ function App() {
             )}
             {healthData && (
               <>
-                <HealthDashboard healthData={healthData} contract={contract} />
+                <HealthDashboard 
+                  healthData={healthData} 
+                  contract={contract} 
+                  account={account}
+                  onRewardsClaimed={handleRewardsClaimed}
+                />
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                   <Button
                     variant="outlined"

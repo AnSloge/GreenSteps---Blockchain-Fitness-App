@@ -65,9 +65,9 @@ contract GreenStepsToken is ERC20, Ownable {
 
         // Update weekly stats
         weekly.steps = steps;
-        weekly.carbonCredits = steps / stepsPerCarbonCredit;
+        weekly.carbonCredits = (steps * 100) / stepsPerCarbonCredit; // Multiply by 100 to handle 2 decimal places
         weekly.tokensEarned =
-            (steps / stepsPerToken) +
+            ((steps * 100) / stepsPerToken) + // Multiply by 100 to handle 2 decimal places
             (weekly.carbonCredits * carbonCreditValue);
         weekly.claimed = false;
         weekly.submitted = true;
@@ -94,7 +94,7 @@ contract GreenStepsToken is ERC20, Ownable {
         require(weekly.submitted, "No steps submitted for this week");
         require(!weekly.claimed, "Rewards already claimed for this week");
 
-        // Mint tokens
+        // Mint tokens - tokens are stored with 2 decimal places (multiplied by 100)
         _mint(msg.sender, weekly.tokensEarned);
         weekly.claimed = true;
 
