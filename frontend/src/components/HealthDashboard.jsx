@@ -63,8 +63,8 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
               id: dayDate.toISOString(),
               date: dayDate,
               steps: dailySteps,
-              carbonCredits: (dailySteps / 10000).toFixed(2),
-              potentialTokens: (dailySteps / 1000).toFixed(2)
+              carbonCredits: (dailySteps * 100 / 10000).toFixed(2),
+              potentialTokens: ((dailySteps * 100 / 1000) + ((dailySteps * 100 / 10000) * 100)).toFixed(2)
             };
           }),
           totalSteps: 0,
@@ -77,8 +77,8 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
 
         // Calculate week totals
         acc[weekNumber].totalSteps = acc[weekNumber].days.reduce((sum, day) => sum + day.steps, 0);
-        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps / 10000).toFixed(2);
-        acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
+        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps * 100 / 10000).toFixed(2);
+        acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps * 100 / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
         acc[weekNumber].carbonSaved = (parseFloat(acc[weekNumber].carbonCredits) * 0.5).toFixed(2);
         acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 10);
       }
@@ -91,16 +91,16 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
         acc[weekNumber].days[adjustedIndex] = {
           ...acc[weekNumber].days[adjustedIndex],
           steps: entry.steps,
-          carbonCredits: (entry.steps / 10000).toFixed(2),
-          potentialTokens: (entry.steps / 1000).toFixed(2),
+          carbonCredits: (entry.steps * 100 / 10000).toFixed(2),
+          potentialTokens: ((entry.steps * 100 / 1000) + ((entry.steps * 100 / 10000) * 100)).toFixed(2),
           date: date,
           id: date.toISOString()
         };
 
         // Recalculate week totals when actual data is added
         acc[weekNumber].totalSteps = acc[weekNumber].days.reduce((sum, day) => sum + day.steps, 0);
-        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps / 10000).toFixed(2);
-        acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
+        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps * 100 / 10000).toFixed(2);
+        acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps * 100 / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
         acc[weekNumber].carbonSaved = (parseFloat(acc[weekNumber].carbonCredits) * 0.5).toFixed(2);
         acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 10);
             }
@@ -131,9 +131,14 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
         const claimed = {};
         
         for (const weekNum of weekNumbers) {
-          const stats = await contract.getWeeklyStats(userAddress, weekNum);
-          if (stats[3]) { // claimed status
-            claimed[weekNum] = true;
+          try {
+            const stats = await contract.getWeeklyStats(userAddress, weekNum);
+            if (stats && stats[3]) { // claimed status
+              claimed[weekNum] = true;
+            }
+          } catch (error) {
+            console.log(`Error checking claimed status for week ${weekNum}:`, error);
+            // Fortsett til neste uke ved feil
           }
         }
         
@@ -172,15 +177,22 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
       }
       
       // Sjekk om steg allerede er sendt for denne uken
-      const weeklyStats = await contract.getWeeklyStats(window.ethereum.selectedAddress, weekNum);
-      if (Number(weeklyStats[0]) > 0) {
-        setSnackbar({
-          open: true,
-          message: "Steps already submitted for this week",
-          severity: "warning"
-        });
-        setIsSubmitting(false);
-        return;
+      try {
+        const weeklyStats = await contract.getWeeklyStats(window.ethereum.selectedAddress, weekNum);
+        console.log("Weekly stats:", weeklyStats);
+
+        if (weeklyStats && Number(weeklyStats[0]) > 0) {
+          setSnackbar({
+            open: true,
+            message: "Steps already submitted for this week",
+            severity: "warning"
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (error) {
+        console.log("Error checking if steps are submitted:", error);
+        // Fortsett hvis det er en feil - det betyr sannsynligvis at ingen steg er lagt inn ennå
       }
       
       // Hent active account
@@ -258,61 +270,80 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
     
     try {
       // Check if steps have been submitted for this week
-      const weeklyStats = await contract.getWeeklyStats(window.ethereum.selectedAddress, weekNum);
-      console.log("Weekly data from contract:", weeklyStats);
-      
-      if (Number(weeklyStats[0]) === 0) {
-        alert("No steps have been submitted for this week in the smart contract");
-        setIsClaiming(false);
-        return;
-      }
-
-      if (weeklyStats[3]) {
-        alert("Rewards for this week have already been claimed");
+      try {
+        const weeklyStats = await contract.getWeeklyStats(window.ethereum.selectedAddress, weekNum);
+        console.log("Weekly data from contract:", weeklyStats);
         
-        // Update UI to reflect claimed status
+        if (!weeklyStats || Number(weeklyStats[0]) === 0) {
+          setSnackbar({
+            open: true,
+            message: "No steps have been submitted for this week in the smart contract",
+            severity: "warning"
+          });
+          setIsClaiming(false);
+          return;
+        }
+
+        if (weeklyStats[3]) {
+          setSnackbar({
+            open: true,
+            message: "Rewards for this week have already been claimed",
+            severity: "warning"
+          });
+          
+          // Update UI to reflect claimed status
+          setClaimedWeeks(prev => ({
+            ...prev,
+            [weekNum]: true
+          }));
+          
+          setClaimDialogOpen(false);
+          setIsClaiming(false);
+          return;
+        }
+        
+        // Claim rewards using the correct function from the contract
+        console.log(`Claiming rewards for week ${weekNum}`);
+        const tx = await contract.claimWeeklyRewards(weekNum);
+        console.log("Transaction sent:", tx.hash);
+        
+        // Wait for transaction to be mined
+        const receipt = await tx.wait();
+        console.log("Transaction confirmed:", receipt);
+        
+        // Update claimed weeks status
         setClaimedWeeks(prev => ({
           ...prev,
           [weekNum]: true
         }));
         
+        // Close dialog after successful claim
         setClaimDialogOpen(false);
+        
+        // Get the amount of tokens earned for this week
+        const tokenAmount = Number(weeklyStats[2]) / 100; // Tokens are stored with 2 decimal places
+
+        // Notify parent component about claimed tokens
+        if (onRewardsClaimed) {
+          onRewardsClaimed(tokenAmount);
+        }
+        
+        // Show success message with token amount
+        setSnackbar({
+          open: true,
+          message: `Successfully claimed ${tokenAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GRST tokens for week ${weekNum}!`,
+          severity: "success"
+        });
+      } catch (statsError) {
+        console.error("Error checking weekly stats:", statsError);
+        setSnackbar({
+          open: true,
+          message: `Error checking weekly stats: ${statsError.message}`,
+          severity: "error"
+        });
         setIsClaiming(false);
         return;
       }
-
-      // Claim rewards using the correct function from the contract
-      console.log(`Claiming rewards for week ${weekNum}`);
-      const tx = await contract.claimWeeklyRewards(weekNum);
-      console.log("Transaction sent:", tx.hash);
-      
-      // Wait for transaction to be mined
-      const receipt = await tx.wait();
-      console.log("Transaction confirmed:", receipt);
-      
-      // Update claimed weeks status
-      setClaimedWeeks(prev => ({
-        ...prev,
-        [weekNum]: true
-      }));
-      
-      // Close dialog after successful claim
-      setClaimDialogOpen(false);
-      
-      // Get the amount of tokens earned for this week
-      const tokenAmount = Number(weeklyStats[2]) / 100; // Tokens are stored with 2 decimal places
-
-      // Notify parent component about claimed tokens
-      if (onRewardsClaimed) {
-        onRewardsClaimed(tokenAmount);
-      }
-      
-      // Show success message with token amount
-      setSnackbar({
-        open: true,
-        message: `Successfully claimed ${tokenAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GRST tokens for week ${weekNum}!`,
-        severity: "success"
-      });
     } catch (error) {
       console.error("Error claiming rewards:", error);
       

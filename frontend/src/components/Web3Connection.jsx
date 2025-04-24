@@ -6,52 +6,12 @@ import { ethers } from 'ethers';
 // Import contractABI from the utils file
 import { contractABI } from '../utils/contractABI';
 
-// Network configuration
-const networks = {
-  1: {
-    name: 'Ethereum Mainnet',
-    currencySymbol: 'ETH',
-    blockExplorer: 'https://etherscan.io'
-  },
-  5: {
-    name: 'Goerli Testnet',
-    currencySymbol: 'GoerliETH',
-    blockExplorer: 'https://goerli.etherscan.io'
-  },
-  11155111: {
-    name: 'Sepolia Testnet',
-    currencySymbol: 'SepoliaETH',
-    blockExplorer: 'https://sepolia.etherscan.io'
-  },
-  137: {
-    name: 'Polygon Mainnet',
-    currencySymbol: 'MATIC',
-    blockExplorer: 'https://polygonscan.com'
-  },
-  80001: {
-    name: 'Mumbai Testnet',
-    currencySymbol: 'MATIC',
-    blockExplorer: 'https://mumbai.polygonscan.com'
-  }
-};
-
-// Get network settings from environment variables
-const targetChainId = parseInt(import.meta.env.VITE_CHAIN_ID || '1'); // Default to mainnet if not specified
-const targetNetwork = networks[targetChainId] || { 
-  name: `Chain ID ${targetChainId}`, 
-  currencySymbol: 'ETH', 
-  blockExplorer: '' 
-};
-
-// Optional fallback RPC URL (used if MetaMask is not available)
-const rpcUrl = import.meta.env.VITE_RPC_URL;
-
 const Web3Connection = ({ onConnect, contractAddress }) => {
   const [account, setAccount] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [currentChainId, setCurrentChainId] = useState(null);
+  const [currentChainId, setCurrentChainId] = useState(null); // eslint-disable-line no-unused-vars
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('info');
@@ -73,14 +33,18 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
 
       // Handle chain changes
       const handleChainChanged = (chainIdHex) => {
-        const newChainId = parseInt(chainIdHex, 16);
-        setCurrentChainId(newChainId);
-        
-        if (newChainId !== targetChainId) {
-          showAlert(`Please switch to ${targetNetwork.name} to use this app`, 'warning');
-        } else if (account) {
-          // Reconnect if we're on the right network now
-          connectWithAccount(account);
+        try {
+          const newChainId = parseInt(chainIdHex, 16);
+          console.log(`Chain changed to ${newChainId}`);
+          setCurrentChainId(newChainId);
+          
+          // No warnings about network changes
+          if (account) {
+            // Reconnect with current account on the new network
+            connectWithAccount(account);
+          }
+        } catch (error) {
+          console.error("Error handling chain change:", error);
         }
       };
 
@@ -148,81 +112,66 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
     setAnchorEl(null);
   };
 
-  const switchNetwork = async () => {
-    if (!window.ethereum) return;
-
-    try {
-      // Try to switch to the network
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: `0x${targetChainId.toString(16)}` }],
-      });
-    } catch (switchError) {
-      // This error code indicates that the chain hasn't been added to MetaMask
-      if (switchError.code === 4902) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [
-              {
-                chainId: `0x${targetChainId.toString(16)}`,
-                chainName: targetNetwork.name,
-                nativeCurrency: {
-                  name: targetNetwork.currencySymbol,
-                  symbol: targetNetwork.currencySymbol,
-                  decimals: 18,
-                },
-                rpcUrls: [rpcUrl],
-                blockExplorerUrls: [targetNetwork.blockExplorer],
-              },
-            ],
-          });
-        } catch (addError) {
-          showAlert(`Failed to add network: ${addError.message}`, 'error');
-        }
-      } else {
-        showAlert(`Failed to switch network: ${switchError.message}`, 'error');
-      }
-    }
-  };
-
   // Connect with specific account
   const connectWithAccount = async (accountAddress) => {
     if (!contractAddress) {
+      console.error("Contract address is not configured");
       showAlert('Contract address is not set. Please check your environment variables.', 'error');
       return;
     }
 
     try {
-      // Check if we're on the right network
-      if (currentChainId !== targetChainId) {
-        showAlert(`Please switch to ${targetNetwork.name} to use this app`, 'warning');
-        return;
-      }
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
+      // No network checking
+      console.log(`Connecting with account ${accountAddress}`);
+      console.log(`Using contract address: ${contractAddress}`);
       
-      // Store contract instance for token balance checks
-      setContractInstance(contractInstance);
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      console.log("Got BrowserProvider");
+      
+      const signer = await provider.getSigner();
+      console.log(`Got signer for address: ${await signer.getAddress()}`);
+      
+      try {
+        const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
+        console.log("Created contract instance");
+        
+        // Store contract instance for token balance checks
+        setContractInstance(contractInstance);
+        console.log("Stored contract instance");
 
-      if (onConnect) {
-        onConnect({ account: accountAddress, contract: contractInstance });
-      }
-
-      // Fetch initial token balance
-      if (accountAddress) {
+        // Check if contract is valid by trying to call a view function
         try {
-          const balance = await contractInstance.balanceOf(accountAddress);
-          setTokenBalance(Number(balance) / 100);
-        } catch (err) {
-          console.error('Failed to get initial token balance:', err);
+          const name = await contractInstance.name();
+          console.log(`Connected to contract: ${name}`);
+        } catch (nameError) {
+          console.warn("Could not get contract name, but proceeding anyway:", nameError);
         }
+
+        if (onConnect) {
+          console.log("Calling onConnect callback with account and contract");
+          onConnect({ account: accountAddress, contract: contractInstance });
+        }
+
+        // Fetch initial token balance
+        if (accountAddress) {
+          try {
+            console.log("Fetching initial token balance");
+            const balance = await contractInstance.balanceOf(accountAddress);
+            const formattedBalance = Number(balance) / 100;
+            console.log(`Initial token balance: ${formattedBalance} GRST`);
+            setTokenBalance(formattedBalance);
+          } catch (err) {
+            console.error('Failed to get initial token balance:', err);
+          }
+        }
+      } catch (contractError) {
+        console.error("Error creating contract instance:", contractError);
+        setError(`Failed to connect to contract: ${contractError.message}`);
+        showAlert(`Failed to connect to contract: ${contractError.message}`, 'error');
       }
     } catch (error) {
-      console.error('Error setting up contract:', error);
-      setError(`Failed to set up contract: ${error.message}`);
+      console.error('Error setting up wallet connection:', error);
+      setError(`Failed to set up connection: ${error.message}`);
     }
   };
 
@@ -245,11 +194,8 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Check network
-      if (currentChainId !== targetChainId) {
-        await switchNetwork();
-      }
-
+      // No network checking or switching
+      console.log("Requesting accounts from wallet");
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts'
       });
@@ -259,7 +205,10 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
       }
 
       const account = accounts[0];
+      console.log(`Connected to account: ${account}`);
       setAccount(account);
+      
+      // Try to connect with this account
       await connectWithAccount(account);
     } catch (error) {
       console.error('Error connecting wallet:', error);
@@ -272,12 +221,6 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
 
   // Menu items
   const menuItems = [
-    { 
-      label: 'Switch Network', 
-      onClick: switchNetwork, 
-      disabled: currentChainId === targetChainId,
-      show: currentChainId !== targetChainId
-    },
     { 
       label: 'Disconnect Wallet', 
       onClick: disconnectWallet, 
