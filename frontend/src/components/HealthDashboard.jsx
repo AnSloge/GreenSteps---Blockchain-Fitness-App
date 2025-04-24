@@ -96,7 +96,7 @@ const HealthDashboard = ({ healthData, contract }) => {
         acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
         acc[weekNumber].carbonSaved = (parseFloat(acc[weekNumber].carbonCredits) * 0.5).toFixed(2);
         acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 10);
-      }
+            }
 
       return acc;
     }, {});
@@ -106,7 +106,7 @@ const HealthDashboard = ({ healthData, contract }) => {
   useState(() => {
     if (Object.keys(weeklyData).length > 0) {
       setSelectedWeek(Math.max(...Object.keys(weeklyData)));
-    }
+  }
   }, [weeklyData]);
 
   const handleClaimRewards = async (weekNum) => {

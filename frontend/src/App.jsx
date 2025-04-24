@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Box, Typography, Button, Snackbar, Alert } from '@mui/material'
 import HealthDataUpload from './components/HealthDataUpload'
 import HealthDashboard from './components/HealthDashboard'
@@ -131,7 +131,20 @@ function App() {
   const [contract, setContract] = useState(null);
   const [walletConnected, setWalletConnected] = useState(false);
   const [error, setError] = useState(null);
+  const [showHeader, setShowHeader] = useState(true);
   const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
+
+  // Track scroll position to show/hide header
+  useEffect(() => {
+    const handleScroll = () => {
+      // Only show header when at the top (position 0)
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      setShowHeader(scrollTop === 0);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleDataUpload = (data) => {
     if (!walletConnected) {
@@ -182,6 +195,10 @@ function App() {
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            transition: 'all 0.3s ease',
+            opacity: showHeader ? 1 : 0,
+            transform: showHeader ? 'translateY(0)' : 'translateY(-100%)',
+            visibility: showHeader ? 'visible' : 'hidden'
           }}
         >
           <Container maxWidth="lg">
@@ -213,7 +230,7 @@ function App() {
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
                     textFillColor: 'transparent',
-                    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+                    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
                   }}
                 >
                   GreenSteps
@@ -225,7 +242,7 @@ function App() {
                     fontSize: { xs: '1rem', sm: '1.1rem' },
                     letterSpacing: '-0.01em',
                     fontWeight: 400,
-                    opacity: 0.85,
+                    opacity: 0.85
                   }}
                 >
                   Track Your Steps, Earn Green Rewards
@@ -237,17 +254,17 @@ function App() {
             </Toolbar>
           </Container>
         </AppBar>
-
+        
         <Box
           component="main"
-          sx={{
-            flexGrow: 1,
+          sx={{ 
+            flexGrow: 1, 
             pt: { xs: '100px', sm: '120px' },
             pb: { xs: 4, sm: 6 },
             px: { xs: 2, sm: 3 },
             display: 'flex',
             flexDirection: 'column',
-            gap: 4,
+            gap: 4
           }}
         >
           <Container maxWidth="lg">
@@ -262,14 +279,14 @@ function App() {
                     variant="outlined"
                     color="error"
                     onClick={handleRemoveData}
-                    sx={{
+                    sx={{ 
                       textTransform: 'none',
                       borderRadius: 2,
                       px: 3,
                       py: 1,
                       '&:hover': {
                         backgroundColor: 'error.light',
-                        color: 'white',
+                        color: 'white'
                       }
                     }}
                   >

@@ -20,7 +20,7 @@ const HealthDataUpload = ({ onDataUpload, walletConnected }) => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      try {
+    try {
         const csvData = e.target.result;
         const lines = csvData.split('\n');
 
@@ -63,31 +63,31 @@ const HealthDataUpload = ({ onDataUpload, walletConnected }) => {
         {walletConnected 
           ? 'Select a CSV file to upload your health data'
           : 'Please connect your wallet before uploading data'}
-      </Typography>
-      <Button
-        variant="contained"
-        component="label"
+        </Typography>
+        <Button
+          variant="contained"
+          component="label"
         disabled={!walletConnected}
         sx={{
           textTransform: 'none',
           px: 4,
           py: 1
         }}
-      >
+        >
         Select CSV File
-        <input
-          type="file"
-          hidden
-          accept=".csv"
-          onChange={handleFileUpload}
-        />
-      </Button>
+          <input
+            type="file"
+            hidden
+            accept=".csv"
+            onChange={handleFileUpload}
+          />
+        </Button>
       {error && (
         <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
           {error}
         </Alert>
       )}
-    </Box>
+      </Box>
   );
 };
 

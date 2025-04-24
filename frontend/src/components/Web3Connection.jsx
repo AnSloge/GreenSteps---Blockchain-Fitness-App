@@ -43,7 +43,7 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
   const disconnectWallet = () => {
     setAccount(null);
     setError(null);
-    if (onConnect) {
+          if (onConnect) {
       onConnect({ account: null, contract: null });
     }
     handleMenuClose();
@@ -72,11 +72,11 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
       const provider = new ethers.BrowserProvider(window.ethereum);
 
       if (contractAddress) {
-        const signer = await provider.getSigner();
-        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-        if (onConnect) {
-          onConnect({ account, contract });
+      if (onConnect) {
+        onConnect({ account, contract });
         }
       } else {
         throw new Error('Contract address is not set. Please check your environment variables.');
@@ -95,39 +95,39 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
         <Button
           variant={account ? "contained" : "outlined"}
           onClick={account ? handleMenuClick : connectWallet}
-          disabled={isLoading}
+            disabled={isLoading}
           startIcon={account ? <AccountBalanceWallet /> : <AccountBalanceWalletOutlined />}
-          sx={{
+            sx={{
             textTransform: 'none',
             borderRadius: 2,
             px: 3,
             py: 1,
-            '&:hover': {
+              '&:hover': {
               backgroundColor: account ? 'primary.dark' : 'primary.light',
             }
-          }}
-        >
+            }}
+          >
           {account ? `${account.slice(0, 6)}...${account.slice(-4)}` : 'Connect Wallet'}
         </Button>
-      </Tooltip>
+        </Tooltip>
 
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-      >
-        <MenuItem onClick={disconnectWallet} sx={{ color: 'error.main' }}>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem onClick={disconnectWallet} sx={{ color: 'error.main' }}>
           <Typography>Disconnect Wallet</Typography>
-        </MenuItem>
-      </Menu>
+            </MenuItem>
+          </Menu>
 
       {error && (
         <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block' }}>
