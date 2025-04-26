@@ -1,0 +1,6 @@
+Emit events
+Access control implementaiton in smart contract: OpenZipplin
+* Lock contract (for upgrading smart contract)
+* USers can only have certain functions
+* Avoid users from cheating (access control)
+  - If they cheat their balance should be reset to zero.  
