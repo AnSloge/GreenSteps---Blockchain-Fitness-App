@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Alert } from '@mui/material';
+import { Box, Typography, Button, Alert, Stack } from '@mui/material';
+import CsvDownloadButton from './CsvDownloadButton';
 
 const HealthDataUpload = ({ onDataUpload, walletConnected }) => {
   const [error, setError] = useState(null);
@@ -63,18 +64,20 @@ const HealthDataUpload = ({ onDataUpload, walletConnected }) => {
         {walletConnected 
           ? 'Select a CSV file to upload your health data'
           : 'Please connect your wallet before uploading data'}
-        </Typography>
+      </Typography>
+      
+      <Stack direction="row" spacing={2} alignItems="center">
         <Button
           variant="contained"
           component="label"
-        disabled={!walletConnected}
-        sx={{
-          textTransform: 'none',
-          px: 4,
-          py: 1
-        }}
+          disabled={!walletConnected}
+          sx={{
+            textTransform: 'none',
+            px: 4,
+            py: 1
+          }}
         >
-        Select CSV File
+          Select CSV File
           <input
             type="file"
             hidden
@@ -82,12 +85,20 @@ const HealthDataUpload = ({ onDataUpload, walletConnected }) => {
             onChange={handleFileUpload}
           />
         </Button>
+        
+        <CsvDownloadButton />
+      </Stack>
+      
+      <Typography variant="caption" color="text.secondary" align="center" sx={{ mt: 2 }}>
+        Need a template? Download a CSV template file
+      </Typography>
+      
       {error && (
         <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
           {error}
         </Alert>
       )}
-      </Box>
+    </Box>
   );
 };
 

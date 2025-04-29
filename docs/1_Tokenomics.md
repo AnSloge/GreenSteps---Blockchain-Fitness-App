@@ -4,7 +4,7 @@
 
 - **Name:** GreenSteps Token
 - **Symbol:** GRST
-- **Blockchain:** Ethereum
+- **Blockchain:** Axiom Chain
 - **Token Standard:** ERC-20
 - **Total Supply:** Dynamic (Minted based on user activity)
 
@@ -25,7 +25,6 @@
 
 - Steps are tracked on a weekly basis
 - Rewards must be claimed within the week
-- No cap on weekly earnings
 - Anti-gaming mechanisms in place
 
 ## Token Utility
@@ -40,7 +39,6 @@
 
    - Access to premium features
    - Participation in governance
-   - Staking rewards
    - Community challenges
 
 3. **Marketplace Integration**
@@ -50,32 +48,11 @@
 
 ## Token Distribution Model
 
-### Initial Distribution (100M GRST)
-
-- Community Rewards Pool: 40%
-- Development Fund: 20%
-- Marketing & Partnerships: 15%
-- Team & Advisors: 15% (vested over 3 years)
-- Liquidity Pool: 10%
-
-### Ongoing Distribution
+### Distribution
 
 - Dynamic minting based on user activity
 - Deflationary mechanisms
 - Burning mechanisms for marketplace transactions
-
-## Vesting Schedules
-
-1. **Team & Advisors**
-
-   - 3-year vesting period
-   - 6-month cliff
-   - Monthly unlocks
-
-2. **Development Fund**
-   - 2-year vesting
-   - Quarterly unlocks
-   - DAO governance after year 1
 
 ## Economic Sustainability
 
@@ -88,19 +65,12 @@
 ### Value Accrual Mechanisms
 
 1. **Platform Fees**
-
    - Marketplace transactions: 2%
    - Carbon credit trades: 1%
    - Premium features: Variable
 
-2. **Staking Rewards**
-   - APY range: 5-15%
-   - Bonus multipliers for long-term staking
-   - Environmental impact multipliers
-
 ### Treasury Management
 
-- Multi-sig wallet
 - Regular community reporting
 - Transparent allocation
 
@@ -108,8 +78,6 @@
 
 1. **Anti-Dump Measures**
 
-   - Staking incentives
-   - Vesting schedules
    - Activity requirements
 
 2. **Security Measures**

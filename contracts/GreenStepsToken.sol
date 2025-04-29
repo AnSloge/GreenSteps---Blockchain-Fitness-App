@@ -113,7 +113,7 @@ contract GreenStepsToken is ERC20, Ownable, AccessControl, Pausable {
         require(steps > 0, "Steps must be greater than 0");
 
         // Add limit to prevent obviously fraudulent inputs
-        require(steps <= 50000, "Step count exceeds daily limit");
+        require(steps <= 350000, "Step count exceeds weekly limit");
 
         UserStats storage stats = userStats[user];
         WeeklyStats storage weekly = stats.weeklyStats[weekNumber];
@@ -122,10 +122,10 @@ contract GreenStepsToken is ERC20, Ownable, AccessControl, Pausable {
 
         // Update weekly stats
         weekly.steps = steps;
-        weekly.carbonCredits = (steps * 100) / stepsPerCarbonCredit; // Multiply by 100 to handle 2 decimal places
+        weekly.carbonCredits = (steps * 100) / stepsPerCarbonCredit; // Multiply by 100 for 2 decimal places
         weekly.tokensEarned =
-            ((steps * 100) / stepsPerToken) + // Multiply by 100 to handle 2 decimal places
-            (weekly.carbonCredits * carbonCreditValue);
+            ((steps * 100) / stepsPerToken) + // Base tokens with 2 decimal places
+            (((steps * 100) / stepsPerCarbonCredit) * carbonCreditValue); // Carbon credit bonus with 2 decimal places
         weekly.claimed = false;
         weekly.submitted = true;
 
