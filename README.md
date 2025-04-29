@@ -7,7 +7,7 @@
 
 ## 🌐 Live Demo
 
-Try out GreenSteps now at: [https://green-steps-blockchain-fitness-app.vercel.app/](https://green-steps-blockchain-fitness-app.vercel.app/)
+Try out GreenSteps now at: https://frontend-ansloge-ansloges-projects.vercel.app
 
 ### Requirements to Use the App:
 
