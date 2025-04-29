@@ -23,10 +23,9 @@ long-term viability plan for the GreenSteps platform and its GRST token.
 Token Specification:
 - Name: GreenSteps Token
 - Symbol: GRST
-- Blockchain: Ethereum
+- Blockchain: Axiom Chain
 - Standard: ERC-20
-- Initial Supply: 100,000,000 GRST
-- Ongoing Supply: Dynamic minting based on user activity
+- Supply: Dynamic minting based on user activity
 
 --------------------------------------------------------------------------------
 1.2 Value Generation Mechanisms
@@ -53,48 +52,21 @@ Primary Value Drivers:
 1.3 Token Distribution Model
 --------------------------------------------------------------------------------
 
-Initial Allocation (100M GRST):
-
-- Community & Rewards (40%)
-  * User Rewards Pool: 30%
-  * Ecosystem Growth: 10%
-
-- Development & Operations (20%)
-  * Technical Development: 12%
-  * Operational Expenses: 8%
-
-- Marketing & Partnerships (15%)
-  * Marketing Activities: 8%
-  * Strategic Partnerships: 7%
-
-- Team & Advisors (15%)
-  * Core Team: 10%
-  * Advisors: 5%
-
-- Liquidity Pool (10%)
-  * DEX provision: 7%
-  * Market making: 3%
+Distribution Mechanism:
+- Activity-based token generation
+- Validator-approved step submissions
+- Weekly reward claims
+- Anti-gaming protections
 
 --------------------------------------------------------------------------------
-1.4 Vesting & Lockup Schedules
+1.4 Platform Controls
 --------------------------------------------------------------------------------
 
-Team & Advisors:
-- 6-month cliff
-- 30-month linear vesting after cliff
-
-Development Fund:
-- 5% initial release
-- Quarterly vesting over 21 months
-
-Marketing & Partnerships:
-- 10% initial release
-- Monthly vesting over 18 months
-
-Investor Allocations:
-- Seed Round: 24-month vesting (6-month cliff)
-- Private Round: 15-month vesting (3-month cliff)
-- Public Sale: 6-month vesting (1-month cliff)
+Access Control:
+- Admin role for parameter updates
+- Validator role for step verification
+- Emergency pause capability
+- User blacklisting for fraud prevention
 
 --------------------------------------------------------------------------------
 1.5 Token Utility
@@ -106,12 +78,10 @@ Investor Allocations:
    - Data validation
 
 2. Governance Rights:
-   - Proposal voting (1 GRST = 1 vote)
    - Parameter adjustment voting
    - Feature prioritization
 
 3. Ecosystem Participation:
-   - Staking rewards (5-15% APY)
    - Carbon credit marketplace
    - Partner program benefits
 
@@ -124,41 +94,29 @@ Investor Allocations:
 2.1 Funding Rounds
 --------------------------------------------------------------------------------
 
-Seed Round (5% of supply):
-- Target Raise: $2.5M
-- Token Price: $0.05 per GRST
-- Vesting: 6-month cliff, 18-month linear vesting
-- Minimum Investment: $50,000
-- Investor Profile: Early-stage VCs, angel investors, blockchain funds
-
-Strategic Round (10% of supply):
+Strategic Round:
 - Target Raise: $8M
-- Token Price: $0.08 per GRST
-- Vesting: 3-month cliff, 12-month linear vesting
-- Minimum Investment: $100,000
 - Investor Profile: Health/fitness VCs, environmental funds, strategic partners
 
-Public Sale (5% of supply):
+Public Sale:
 - Target Raise: $5M
-- Token Price: $0.10 per GRST
-- Vesting: 1-month cliff, 5-month linear vesting
 - Structure: Tiered allocation system with community priority
 
 --------------------------------------------------------------------------------
-2.2 Investor Targeting Strategy
+2.2 Investor Relations
 --------------------------------------------------------------------------------
 
 Primary Investor Categories:
 
-1. Health & Wellness Investors:
-   - Fitness technology VCs
-   - Digital health funds
-   - Wearable technology investors
+1. Health & Wellness VCs:
+   - Focus on fitness technology
+   - Digital health portfolio alignment
+   - Global reach and network
 
-2. Environmental/ESG Funds:
-   - Climate tech investors
-   - Carbon market specialists
-   - Sustainability-focused funds
+2. Environmental Impact Funds:
+   - ESG-focused investors
+   - Carbon credit market expertise
+   - Sustainability partnerships
 
 3. Blockchain/Web3 Investors:
    - Token economics experts
@@ -169,8 +127,8 @@ Value Proposition for Investors:
 
 1. Market Opportunity:
    - $94B global fitness app market
-   - Growing carbon offset market ($1B+)
-   - First-mover advantage in web3 fitness
+   - Growing carbon credit market
+   - Web3 fitness pioneer position
 
 2. Unique Positioning:
    - Dual incentive model (health + environmental)
@@ -264,10 +222,10 @@ Direct Revenue:
 
 Indirect Value Accrual:
 
-1. Token Appreciation:
+1. Token Value:
    - Increased utility driving demand
    - Limited supply vs. growing user base
-   - Staking mechanisms reducing circulating supply
+   - Burning mechanisms reducing supply
 
 2. Ecosystem Growth:
    - Partner integrations
@@ -333,27 +291,22 @@ Inflation Control Mechanisms:
    - Premium feature payment partial burns
    - Regular token buyback and burn from revenue
 
-3. Staking Incentives:
-   - Long-term staking rewards (5-15% APY)
-   - Governance participation bonuses
-   - Environmental impact multipliers for stakers
-
 Treasury Management:
 
-1. Multi-signature Controls:
-   - 5/7 signature requirement for major treasury actions
-   - Time-locked executions for large movements
+1. Controls:
+   - Admin role for major actions
+   - Time-locked executions
    - Transparent on-chain activity
 
 2. Diversification Strategy:
    - Stable asset reserves (30%)
-   - Revenue-generating DeFi positions (40%)
+   - Revenue-generating positions (40%)
    - Strategic investments (20%)
    - Operating capital (10%)
 
 3. Regular Reporting:
    - Quarterly financial transparency reports
-   - Community treasury dashboard
+   - Community dashboard
    - Regular governance calls
 
 --------------------------------------------------------------------------------
