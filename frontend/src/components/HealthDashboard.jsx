@@ -63,8 +63,8 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
               id: dayDate.toISOString(),
               date: dayDate,
               steps: dailySteps,
-              carbonCredits: (dailySteps * 100 / 10000).toFixed(2),
-              potentialTokens: ((dailySteps * 100 / 1000) + ((dailySteps * 100 / 10000) * 100)).toFixed(2)
+              carbonCredits: (dailySteps / 10000).toFixed(2),
+              potentialTokens: ((dailySteps / 1000) + ((dailySteps / 10000) * 100)).toFixed(2)
             };
           }),
           totalSteps: 0,
@@ -77,10 +77,10 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
 
         // Calculate week totals
         acc[weekNumber].totalSteps = acc[weekNumber].days.reduce((sum, day) => sum + day.steps, 0);
-        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps * 100 / 10000).toFixed(2);
-        acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps * 100 / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
+        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps / 10000).toFixed(2);
+        acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
         acc[weekNumber].carbonSaved = (parseFloat(acc[weekNumber].carbonCredits) * 0.5).toFixed(2);
-        acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 10);
+        acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 5);
       }
 
       // Update with actual data if available
@@ -91,19 +91,19 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
         acc[weekNumber].days[adjustedIndex] = {
           ...acc[weekNumber].days[adjustedIndex],
           steps: entry.steps,
-          carbonCredits: (entry.steps * 100 / 10000).toFixed(2),
-          potentialTokens: ((entry.steps * 100 / 1000) + ((entry.steps * 100 / 10000) * 100)).toFixed(2),
+          carbonCredits: (entry.steps / 10000).toFixed(2),
+          potentialTokens: ((entry.steps / 1000) + ((entry.steps / 10000) * 100)).toFixed(2),
           date: date,
           id: date.toISOString()
         };
 
         // Recalculate week totals when actual data is added
         acc[weekNumber].totalSteps = acc[weekNumber].days.reduce((sum, day) => sum + day.steps, 0);
-        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps * 100 / 10000).toFixed(2);
-        acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps * 100 / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
+        acc[weekNumber].carbonCredits = (acc[weekNumber].totalSteps / 10000).toFixed(2);
+        acc[weekNumber].potentialTokens = ((acc[weekNumber].totalSteps / 1000) + (parseFloat(acc[weekNumber].carbonCredits) * 100)).toFixed(2);
         acc[weekNumber].carbonSaved = (parseFloat(acc[weekNumber].carbonCredits) * 0.5).toFixed(2);
-        acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 10);
-            }
+        acc[weekNumber].treesEquivalent = Math.floor(parseFloat(acc[weekNumber].carbonCredits) / 5);
+      }
 
       return acc;
     }, {});

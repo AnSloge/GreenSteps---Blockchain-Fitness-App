@@ -5,6 +5,16 @@
   <h3>Track Your Steps, Earn Green Rewards</h3>
 </div>
 
+## 🌐 Live Demo
+
+Try out GreenSteps now at: https://frontend-ansloge-ansloges-projects.vercel.app
+
+### Requirements to Use the App:
+
+- A Web3 wallet (like MetaMask) installed in your browser
+- Some AXC tokens for gas fees on Axiom Chain
+- A device or app that can export step data in CSV format
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -103,8 +113,19 @@ GreenSteps follows a decentralized architecture where user data is processed loc
 
 - Node.js v16+
 - pnpm (or npm/yarn)
-- MetaMask or other Ethereum wallet
+- MetaMask or other Web3 wallet with Axiom Chain configured
+- Some AXC tokens for gas fees
 - Git
+
+### Network Configuration for MetaMask
+
+To connect to Axiom Chain, add these network details to your MetaMask:
+
+- Network Name: Axiom Chain
+- RPC URL: https://rpc.axiom.network/
+- Chain ID: 23413
+- Currency Symbol: AXC
+- Block Explorer: https://explorer.axiom.network/
 
 ### Clone and Install
 
@@ -128,8 +149,8 @@ Create a `.env` file in the `frontend` folder with the following variables:
 
 ```
 VITE_CONTRACT_ADDRESS=0xYour_Contract_Address
-VITE_CHAIN_ID=5  # 5 for Goerli, 1 for Mainnet, etc.
-VITE_RPC_URL=https://your-rpc-provider.io/v3/your-api-key
+VITE_CHAIN_ID=23413  # Chain ID for Axiom Chain
+VITE_RPC_URL=https://rpc.axiom.network/
 ```
 
 ### Compile and Deploy Smart Contracts (optional if you want to redeploy)
@@ -138,7 +159,7 @@ VITE_RPC_URL=https://your-rpc-provider.io/v3/your-api-key
 cd ..  # Go back to project root
 npx hardhat compile
 npx hardhat test
-npx hardhat run scripts/deploy.js --network goerli
+npx hardhat run scripts/deploy.js --network axiom
 ```
 
 ## 🚀 Usage
