@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Box, IconButton, Tooltip, Menu, MenuItem, Typography, Button, Snackbar, Alert, Badge, Chip } from '@mui/material';
-import { AccountBalanceWallet, AccountBalanceWalletOutlined, LocalAtm } from '@mui/icons-material';
+import { AccountBalanceWallet, AccountBalanceWalletOutlined, LocalAtm, Leaderboard as LeaderboardIcon } from '@mui/icons-material';
 import { ethers } from 'ethers';
 
 // Import contractABI from the utils file
 import { contractABI } from '../utils/contractABI';
+import Leaderboard from './Leaderboard';
 
 const Web3Connection = ({ onConnect, contractAddress }) => {
   const [account, setAccount] = useState(null);
@@ -17,6 +18,7 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
   const [alertSeverity, setAlertSeverity] = useState('info');
   const [tokenBalance, setTokenBalance] = useState(0);
   const [contract, setContractInstance] = useState(null);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
 
   // Listen for account and chain changes
   useEffect(() => {
@@ -231,36 +233,58 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       {account && (
-        <Tooltip title="Your GRST Token Balance">
-          <Chip
-            icon={<LocalAtm />}
-            label={`${tokenBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GRST`}
-            color="secondary"
+        <>
+          <Button
+            variant="contained"
+            onClick={() => setLeaderboardOpen(true)}
+            startIcon={<LeaderboardIcon />}
             sx={{
+              textTransform: 'none',
               borderRadius: 2,
-              height: 40,
-              py: 0.5,
-              px: 1,
+              fontSize: '0.9rem',
               fontWeight: 500,
-              '& .MuiChip-icon': {
-                color: 'inherit',
+              backgroundColor: '#34C759', // Apple green
+              color: '#ffffff',
+              '&:hover': {
+                backgroundColor: '#28a347', // Darker green
               },
               transition: 'all 0.2s',
-              animation: tokenBalance > 0 ? 'pulse 2s infinite' : 'none',
-              '@keyframes pulse': {
-                '0%': {
-                  boxShadow: '0 0 0 0 rgba(88, 86, 214, 0.7)',
-                },
-                '70%': {
-                  boxShadow: '0 0 0 6px rgba(88, 86, 214, 0)',
-                },
-                '100%': {
-                  boxShadow: '0 0 0 0 rgba(88, 86, 214, 0)',
-                },
-              },
             }}
-          />
-        </Tooltip>
+          >
+            Leaderboard
+          </Button>
+
+          <Tooltip title="Your GRST Token Balance">
+            <Chip
+              icon={<LocalAtm />}
+              label={`${tokenBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} GRST`}
+              color="secondary"
+              sx={{
+                borderRadius: 2,
+                height: 40,
+                py: 0.5,
+                px: 1,
+                fontWeight: 500,
+                '& .MuiChip-icon': {
+                  color: 'inherit',
+                },
+                transition: 'all 0.2s',
+                animation: tokenBalance > 0 ? 'pulse 2s infinite' : 'none',
+                '@keyframes pulse': {
+                  '0%': {
+                    boxShadow: '0 0 0 0 rgba(88, 86, 214, 0.7)',
+                  },
+                  '70%': {
+                    boxShadow: '0 0 0 6px rgba(88, 86, 214, 0)',
+                  },
+                  '100%': {
+                    boxShadow: '0 0 0 0 rgba(88, 86, 214, 0)',
+                  },
+                },
+              }}
+            />
+          </Tooltip>
+        </>
       )}
       <Tooltip title={account ? "Connected Wallet" : "Connect Wallet"}>
         <Button
@@ -325,7 +349,7 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
           horizontal: 'center' 
         }}
         sx={{
-          mt: 7 // Flytt nedover for å unngå kollisjoner med header
+          mt: 7 // Move down to avoid collisions with header
         }}
       >
         <Alert 
@@ -339,6 +363,14 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
           {alertMessage}
         </Alert>
       </Snackbar>
+      
+      {/* Leaderboard Dialog */}
+      <Leaderboard 
+        open={leaderboardOpen} 
+        onClose={() => setLeaderboardOpen(false)}
+        tokenBalance={tokenBalance}
+        account={account}
+      />
     </Box>
   );
 };
