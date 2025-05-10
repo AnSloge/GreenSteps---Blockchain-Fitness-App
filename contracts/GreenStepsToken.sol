@@ -15,6 +15,10 @@ contract GreenStepsToken is ERC20, Ownable, AccessControl, Pausable {
     // Max supply constant (1,642,500,000 GRST)
     uint256 public constant MAX_SUPPLY = 1642500000 * 10 ** 18;
 
+    // Burn mechanism constants
+    uint256 public constant INACTIVITY_PERIOD = 90 days; // 3 months
+    uint256 public constant BURN_PERCENTAGE = 5; // 5% burn
+
     // Conversion rates
     uint256 public stepsPerToken = 1000; // Steps needed for 1 GRST token
     uint256 public stepsPerCarbonCredit = 10000; // Steps needed for 1 carbon credit
@@ -27,6 +31,7 @@ contract GreenStepsToken is ERC20, Ownable, AccessControl, Pausable {
         uint256 tokensEarned;
         bool claimed;
         bool submitted;
+        uint256 submissionTimestamp; // Track when steps were submitted
     }
 
     // User stats
@@ -55,6 +60,11 @@ contract GreenStepsToken is ERC20, Ownable, AccessControl, Pausable {
         uint256 carbonCredits,
         uint256 tokens,
         uint256 weekNumber
+    );
+    event InactiveTokensBurned(
+        address indexed user,
+        uint256 weekNumber,
+        uint256 burnedAmount
     );
     event StepsPerTokenUpdated(uint256 newStepsPerToken);
     event StepsPerCarbonCreditUpdated(uint256 newStepsPerCarbonCredit);
@@ -131,6 +141,7 @@ contract GreenStepsToken is ERC20, Ownable, AccessControl, Pausable {
             (((steps * 100) / stepsPerCarbonCredit) * carbonCreditValue); // Carbon credit bonus with 2 decimal places
         weekly.claimed = false;
         weekly.submitted = true;
+        weekly.submissionTimestamp = block.timestamp; // Record submission time
 
         // Update total stats
         stats.totalSteps += steps;
@@ -155,6 +166,15 @@ contract GreenStepsToken is ERC20, Ownable, AccessControl, Pausable {
 
         require(weekly.submitted, "No steps submitted for this week");
         require(!weekly.claimed, "Rewards already claimed for this week");
+
+        // Check if rewards are inactive (not claimed for 3 months)
+        if (block.timestamp >= weekly.submissionTimestamp + INACTIVITY_PERIOD) {
+            // Calculate burn amount (5% of tokens)
+            uint256 burnAmount = (weekly.tokensEarned * BURN_PERCENTAGE) / 100;
+            weekly.tokensEarned -= burnAmount;
+
+            emit InactiveTokensBurned(msg.sender, weekNumber, burnAmount);
+        }
 
         // Check if minting would exceed max supply
         require(
