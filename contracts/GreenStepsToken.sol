@@ -12,6 +12,9 @@ contract GreenStepsToken is ERC20, Ownable, AccessControl, Pausable {
     bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
+    // Max supply constant (1,642,500,000 GRST)
+    uint256 public constant MAX_SUPPLY = 1642500000 * 10 ** 18;
+
     // Conversion rates
     uint256 public stepsPerToken = 1000; // Steps needed for 1 GRST token
     uint256 public stepsPerCarbonCredit = 10000; // Steps needed for 1 carbon credit
@@ -152,6 +155,12 @@ contract GreenStepsToken is ERC20, Ownable, AccessControl, Pausable {
 
         require(weekly.submitted, "No steps submitted for this week");
         require(!weekly.claimed, "Rewards already claimed for this week");
+
+        // Check if minting would exceed max supply
+        require(
+            totalSupply() + weekly.tokensEarned <= MAX_SUPPLY,
+            "Minting would exceed max supply"
+        );
 
         // Mint tokens - tokens are stored with 2 decimal places (multiplied by 100)
         _mint(msg.sender, weekly.tokensEarned);
