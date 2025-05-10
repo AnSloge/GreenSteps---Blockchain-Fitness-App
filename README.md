@@ -7,13 +7,15 @@
 
 ## 🌐 Live Demo
 
-Try out GreenSteps now at: https://green-steps-blockchain-fitness-app.vercel.app
+Try out GreenSteps now at: https://frontend-ansloge-ansloges-projects.vercel.app
 
 ### Requirements to Use the App:
 
 - A Web3 wallet (like MetaMask) installed in your browser
 - Some AXC tokens for gas fees on Axiom Chain
 - A device or app that can export step data in CSV format
+
+> **Note:** For detailed setup and testing instructions, please refer to [INSTRUCTIONS.md](INSTRUCTIONS.md)
 
 ## 📋 Table of Contents
 
@@ -69,7 +71,7 @@ GreenSteps is a blockchain-based application that unites fitness, sustainability
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/GreenSteps---Blockchain-Fitness-App.git
+git clone https://github.com/AnSloge/GreenSteps---Blockchain-Fitness-App
 cd GreenSteps---Blockchain-Fitness-App
 
 # Install frontend dependencies
@@ -92,6 +94,8 @@ npx hardhat test
 cd frontend
 pnpm run dev
 ```
+
+See [INSTRUCTIONS.md](INSTRUCTIONS.md) for more comprehensive testing procedures.
 
 ## 🔐 Smart Contracts
 
