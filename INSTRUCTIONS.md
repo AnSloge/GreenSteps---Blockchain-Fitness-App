@@ -1,6 +1,6 @@
 # GreenSteps - Detailed Setup and Testing Instructions
 
-This document provides detailed instructions for setting up, running, and testing the GreenSteps blockchain fitness application.
+This document provides detailed instructions for setting up, running, and testing the GreenSteps blockchain fitness application on both Windows and macOS.
 
 ## Table of Contents
 
@@ -17,6 +17,8 @@ Before you begin, ensure you have the following installed:
 
 - **Node.js**: Version 16.0 or higher
 - **pnpm**: For package management (alternatives: npm or yarn)
+  - Windows installation: `npm install -g pnpm`
+  - macOS installation: `brew install pnpm` or `npm install -g pnpm`
 - **MetaMask**: Browser extension for Ethereum wallet
 - **Git**: For version control
 
@@ -32,6 +34,7 @@ Before you begin, ensure you have the following installed:
 2. **Navigate to frontend directory and install dependencies**:
 
    ```bash
+   # For both Windows and macOS
    cd frontend
    pnpm install
    ```
@@ -39,6 +42,7 @@ Before you begin, ensure you have the following installed:
 3. **Start the development server**:
 
    ```bash
+   # For both Windows and macOS
    pnpm run dev
    ```
 
@@ -51,6 +55,11 @@ Before you begin, ensure you have the following installed:
 
    ```bash
    # Make sure you're in the project root directory, not in frontend
+   # For Windows
+   cd ..
+   npx hardhat test
+
+   # For macOS (if the above doesn't work)
    cd ..
    npx hardhat test
    ```
@@ -159,3 +168,15 @@ https://frontend-ansloge-ansloges-projects.vercel.app
    - Refresh the dashboard
    - Check for any error messages
    - Verify the file was successfully uploaded
+
+### Platform-Specific Issues
+
+#### Windows
+
+- If you encounter "command not found" errors, ensure you're using the correct terminal (PowerShell or Command Prompt)
+- For permission issues, try running PowerShell or Command Prompt as Administrator
+
+#### macOS
+
+- If terminal commands fail with permission errors, try using `sudo` before the command
+- If you have issues with pnpm, you can alternatively use npm: replace `pnpm install` with `npm install` and `pnpm run dev` with `npm run dev`
