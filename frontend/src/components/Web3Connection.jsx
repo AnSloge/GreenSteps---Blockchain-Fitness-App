@@ -37,7 +37,6 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
       const handleChainChanged = (chainIdHex) => {
         try {
           const newChainId = parseInt(chainIdHex, 16);
-          console.log(`Chain changed to ${newChainId}`);
           setCurrentChainId(newChainId);
           
           // No warnings about network changes
@@ -124,43 +123,31 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
 
     try {
       // No network checking
-      console.log(`Connecting with account ${accountAddress}`);
-      console.log(`Using contract address: ${contractAddress}`);
-      
       const provider = new ethers.BrowserProvider(window.ethereum);
-      console.log("Got BrowserProvider");
-      
       const signer = await provider.getSigner();
-      console.log(`Got signer for address: ${await signer.getAddress()}`);
       
       try {
         const contractInstance = new ethers.Contract(contractAddress, contractABI, signer);
-        console.log("Created contract instance");
         
         // Store contract instance for token balance checks
         setContractInstance(contractInstance);
-        console.log("Stored contract instance");
 
         // Check if contract is valid by trying to call a view function
         try {
-          const name = await contractInstance.name();
-          console.log(`Connected to contract: ${name}`);
+          await contractInstance.name();
         } catch (nameError) {
-          console.warn("Could not get contract name, but proceeding anyway:", nameError);
+          console.error("Could not get contract name:", nameError);
         }
 
         if (onConnect) {
-          console.log("Calling onConnect callback with account and contract");
           onConnect({ account: accountAddress, contract: contractInstance });
         }
 
         // Fetch initial token balance
         if (accountAddress) {
           try {
-            console.log("Fetching initial token balance");
             const balance = await contractInstance.balanceOf(accountAddress);
             const formattedBalance = Number(balance) / 100;
-            console.log(`Initial token balance: ${formattedBalance} GRST`);
             setTokenBalance(formattedBalance);
           } catch (err) {
             console.error('Failed to get initial token balance:', err);
@@ -197,7 +184,6 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
     setError(null);
     try {
       // No network checking or switching
-      console.log("Requesting accounts from wallet");
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts'
       });
@@ -207,7 +193,6 @@ const Web3Connection = ({ onConnect, contractAddress }) => {
       }
 
       const account = accounts[0];
-      console.log(`Connected to account: ${account}`);
       setAccount(account);
       
       // Try to connect with this account

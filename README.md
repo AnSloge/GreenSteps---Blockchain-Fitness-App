@@ -1,13 +1,14 @@
 # GreenSteps - Blockchain Fitness App
 
 <div align="center">
-  <img src="frontend/public/logo.png" alt="GreenSteps Logo" width="200" height="auto" />
   <h3>Track Your Steps, Earn Green Rewards</h3>
 </div>
 
 ## 🌐 Live Demo
 
-Try out GreenSteps now at: https://frontend-ansloge-ansloges-projects.vercel.app
+Try out GreenSteps now at: `[Your deployment URL here]`
+
+> **Note:** After deploying the application, replace the placeholder above with your actual deployment URL.
 
 ### Requirements to Use the App:
 

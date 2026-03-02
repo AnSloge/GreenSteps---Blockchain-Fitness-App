@@ -3,6 +3,7 @@ import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Bo
 import HealthDataUpload from './components/HealthDataUpload'
 import HealthDashboard from './components/HealthDashboard'
 import Web3Connection from './components/Web3Connection'
+import ErrorBoundary from './components/ErrorBoundary'
 import './App.css'
 
 // Create a theme instance
@@ -177,7 +178,6 @@ function App() {
   // Web3Connection-komponenten viser allerede saldoen, så vi trenger ikke å lagre det separat.
   const handleRewardsClaimed = () => {
     // Vi trenger ikke å gjøre noe her siden Web3Connection automatisk oppdaterer saldoen
-    console.log('Rewards claimed successfully');
   };
 
   const handleCloseError = () => {
@@ -278,16 +278,20 @@ function App() {
         >
           <Container maxWidth="lg">
             {showUpload && (
-              <HealthDataUpload onDataUpload={handleDataUpload} walletConnected={walletConnected} />
+              <ErrorBoundary>
+                <HealthDataUpload onDataUpload={handleDataUpload} walletConnected={walletConnected} />
+              </ErrorBoundary>
             )}
             {healthData && (
               <>
-                <HealthDashboard 
-                  healthData={healthData} 
-                  contract={contract} 
-                  account={account}
-                  onRewardsClaimed={handleRewardsClaimed}
-                />
+                <ErrorBoundary>
+                  <HealthDashboard 
+                    healthData={healthData} 
+                    contract={contract} 
+                    account={account}
+                    onRewardsClaimed={handleRewardsClaimed}
+                  />
+                </ErrorBoundary>
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                   <Button
                     variant="outlined"

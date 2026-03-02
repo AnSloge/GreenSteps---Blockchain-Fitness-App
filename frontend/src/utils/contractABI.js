@@ -1,7 +1,11 @@
-// Dette er en eksempelfil. Erstatt denne ABI-en med den fullstendige ABI-en du fikk fra Remix
-
 // ABI for the GreenStepsToken contract
-export const contractABI = [
+// Imported from the contracts/abi directory
+import abiData from '../../../contracts/abi/GreenStepsToken.json' assert { type: 'json' };
+
+export const contractABI = abiData;
+
+// Legacy inline ABI (kept for reference, but contractABI now uses the imported version)
+const legacyABI = [
   {
     "inputs": [],
     "stateMutability": "nonpayable",
