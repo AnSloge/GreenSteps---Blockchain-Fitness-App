@@ -11,5 +11,17 @@ export default defineConfig({
       '@emotion/react': '@emotion/react',
       '@emotion/styled': '@emotion/styled'
     }
+  },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          mui: ['@mui/material', '@mui/icons-material'],
+          ethers: ['ethers']
+        }
+      }
+    }
   }
 })

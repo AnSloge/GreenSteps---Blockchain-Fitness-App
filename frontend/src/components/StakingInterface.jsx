@@ -48,7 +48,6 @@ const StakingInterface = ({ contract, account }) => {
         setError(`Contract is missing required functions: ${missingFunctions.join(', ')}`);
         setContractReady(false);
       } else {
-        console.log("Contract is properly initialized with all required functions");
         setContractReady(true);
         setError('');
       }
@@ -71,7 +70,6 @@ const StakingInterface = ({ contract, account }) => {
       try {
         decimals = await contract.decimals();
         decimals = Number(decimals);
-        console.log(`Token decimals for staking: ${decimals}`);
       } catch (err) {
         console.warn("Could not get decimals from contract, defaulting to 18:", err);
         decimals = 18; // Standard ERC20
@@ -87,7 +85,6 @@ const StakingInterface = ({ contract, account }) => {
         // Bruk verdiene som de er
         amount = Number(info[0]);
         bonusEarned = Number(info[4]);
-        console.log("Using raw amounts for staking (detected actual 0 decimals)");
       } else {
         // Normal ERC20 beløp med decimals
         const divisor = ethers.parseUnits("1", decimals);
@@ -102,9 +99,6 @@ const StakingInterface = ({ contract, account }) => {
         isStaked: info[3],
         bonusEarned: bonusEarned
       });
-      
-      console.log("Staking info:", info);
-      console.log("Formatted staking amount:", amount);
     } catch (err) {
       console.error('Error fetching staking info:', err);
     }
@@ -121,7 +115,6 @@ const StakingInterface = ({ contract, account }) => {
         try {
           decimals = await contract.decimals();
           decimals = Number(decimals);
-          console.log(`Token decimals: ${decimals}`);
         } catch (err) {
           console.warn("Could not get decimals from contract, defaulting to 18:", err);
           decimals = 18; // Standard ERC20
@@ -136,15 +129,11 @@ const StakingInterface = ({ contract, account }) => {
           // Dette ser ut som en liten verdi, sannsynligvis ikke multiplisert med decimals
           // Bruk balansen som den er
           formattedBalance = Number(bal);
-          console.log("Using raw balance (detected actual 0 decimals)");
         } else {
           // Normal ERC20 balance med decimals
           const divisor = ethers.parseUnits("1", decimals);
           formattedBalance = Number(bal) / Number(divisor);
         }
-        
-        console.log(`User balance (raw): ${bal.toString()}`);
-        console.log(`User balance (formatted): ${formattedBalance} GRST`);
         
         setBalance(formattedBalance.toString());
       }
@@ -180,14 +169,6 @@ const StakingInterface = ({ contract, account }) => {
     if (contract && account && contractReady) {
       fetchStakingInfo();
       fetchBalance();
-      
-      // Log contract interface for debugging - med sjekk for å forhindre null/undefined error
-      console.log("Contract:", contract);
-      if (contract && contract.interface && contract.interface.functions) {
-        console.log("Contract methods:", Object.keys(contract.interface.functions));
-      } else {
-        console.log("Contract interface is not properly initialized");
-      }
     }
   }, [contract, account, contractReady]);
 
@@ -202,7 +183,6 @@ const StakingInterface = ({ contract, account }) => {
       try {
         decimals = await contract.decimals();
         decimals = Number(decimals);
-        console.log(`Token decimals for approve: ${decimals}`);
       } catch (err) {
         console.warn("Could not get decimals from contract, defaulting to 18:", err);
         decimals = 18;
@@ -211,13 +191,11 @@ const StakingInterface = ({ contract, account }) => {
       // Denne kontrakten bruker faktisk 0 desimaler selv om den rapporterer 18
       // Så vi bruker direktekonvertering uten desimaler
       const amount = ethers.parseUnits(stakeAmount, 0); // Bruk 0 desimaler
-      console.log(`Approving ${stakeAmount} GRST tokens (${amount})...`);
       
       // Approve the contract to spend tokens
       const tx = await contract.approve(contract.target, amount);
       await tx.wait();
       
-      console.log('Approval successful');
       setSuccess('Approved tokens for staking. You can now stake your tokens.');
       
       // Now you can stake
@@ -241,7 +219,6 @@ const StakingInterface = ({ contract, account }) => {
       // Denne kontrakten bruker faktisk 0 desimaler selv om den rapporterer 18
       // Så vi bruker direktekonvertering uten desimaler
       const amount = ethers.parseUnits(stakeAmount, 0); // Bruk 0 desimaler
-      console.log(`Staking ${stakeAmount} GRST tokens (${amount})...`);
       
       // Try to stake
       const tx = await contract.stakeTokens(amount);

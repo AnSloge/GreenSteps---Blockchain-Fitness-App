@@ -137,7 +137,7 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
               claimed[weekNum] = true;
             }
           } catch (error) {
-            console.log(`Error checking claimed status for week ${weekNum}:`, error);
+            console.error(`Error checking claimed status for week ${weekNum}:`, error);
             // Fortsett til neste uke ved feil
           }
         }
@@ -179,7 +179,6 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
       // Sjekk om steg allerede er sendt for denne uken
       try {
         const weeklyStats = await contract.getWeeklyStats(window.ethereum.selectedAddress, weekNum);
-        console.log("Weekly stats:", weeklyStats);
 
         if (weeklyStats && Number(weeklyStats[0]) > 0) {
           setSnackbar({
@@ -191,7 +190,7 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
           return;
         }
       } catch (error) {
-        console.log("Error checking if steps are submitted:", error);
+        console.error("Error checking if steps are submitted:", error);
         // Fortsett hvis det er en feil - det betyr sannsynligvis at ingen steg er lagt inn ennå
       }
       
@@ -232,7 +231,6 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
       });
       
       setSubmitDialogOpen(false);
-      console.log("Steps submitted:", receipt);
     } catch (error) {
       console.error("Error submitting steps:", error);
       
@@ -272,7 +270,6 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
       // Check if steps have been submitted for this week
       try {
         const weeklyStats = await contract.getWeeklyStats(window.ethereum.selectedAddress, weekNum);
-        console.log("Weekly data from contract:", weeklyStats);
         
         if (!weeklyStats || Number(weeklyStats[0]) === 0) {
           setSnackbar({
@@ -303,13 +300,10 @@ const HealthDashboard = ({ healthData, contract, onRewardsClaimed }) => {
         }
         
         // Claim rewards using the correct function from the contract
-        console.log(`Claiming rewards for week ${weekNum}`);
         const tx = await contract.claimWeeklyRewards(weekNum);
-        console.log("Transaction sent:", tx.hash);
         
         // Wait for transaction to be mined
         const receipt = await tx.wait();
-        console.log("Transaction confirmed:", receipt);
         
         // Update claimed weeks status
         setClaimedWeeks(prev => ({

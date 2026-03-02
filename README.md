@@ -7,7 +7,9 @@
 
 ## 🌐 Live Demo
 
-Try out GreenSteps now at: https://frontend-ansloge-ansloges-projects.vercel.app
+Try out GreenSteps now at: `[Your deployment URL here]`
+
+> **Note:** After deploying the application, replace the placeholder above with your actual deployment URL.
 
 ### Requirements to Use the App:
 

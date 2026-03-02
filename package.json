@@ -1,7 +1,7 @@
 {
   "name": "greensteps---blockchain-fitness-app",
   "version": "1.0.0",
-  "description": "<div align=\"center\">\r   <img src=\"frontend/public/logo.png\" alt=\"GreenSteps Logo\" width=\"200\" height=\"auto\" />\r   <h3>Track Your Steps, Earn Green Rewards</h3>\r </div>",
+  "description": "GreenSteps - A blockchain-based fitness rewards application that tracks your steps and rewards you with GRST tokens on Axiom Chain",
   "main": "hardhat.config.js",
   "directories": {
     "doc": "docs",
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "chai": "^4.5.0",
+    "dotenv": "^17.3.1",
     "ethers": "^6.13.5",
     "hardhat": "^2.22.19",
     "hardhat-gas-reporter": "^1.0.10",
@@ -16,13 +17,15 @@
     "typechain": "^8.3.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "hardhat test",
+    "deploy:axiom": "hardhat run scripts/deploy-greensteps.js --network axiom"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["blockchain", "fitness", "rewards", "ethereum", "axiom-chain", "erc20"],
+  "author": "GreenSteps Team",
   "license": "ISC",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@openzeppelin/contracts": "^5.3.0"
+    "@openzeppelin/contracts": "^5.3.0",
+    "fast-check": "^4.5.3"
   }
 }
